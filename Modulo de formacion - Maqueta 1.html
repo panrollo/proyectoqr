@@ -1,0 +1,2094 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GroupCOS · Módulo de Formación y Desarrollo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F5F9;--bg2:#ECEEF5;--surface:#FFFFFF;--s2:#F8F9FC;
+  --br:rgba(0,0,0,0.07);--br2:rgba(0,0,0,0.12);
+  --tx:#1A1C23;--tx2:#5C6070;--tx3:#9CA3B0;
+  --red:#C0272D;--rl:#FDEAEA;--rm:#E85555;
+  --teal:#0D7A5F;--tl:#E5F5F0;--tm:#1AAF87;
+  --blue:#1A5FBF;--bl:#EAF0FB;
+  --amb:#C07A10;--al:#FEF4E4;
+  --grn:#1A7A40;--gl:#E5F5EC;
+  --pur:#5C3DB5;--pl:#EDEAFC;
+  --cor:#B54020;--cl:#FAECEA;
+  --gry:#6B6F7A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-size:13px;line-height:1.5;min-height:100vh}
+.mono{font-family:'DM Mono',monospace}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--br2);border-radius:3px}
+
+/* LOGIN */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.lstripe{position:fixed;top:0;left:0;right:0;height:4px;background:var(--red);z-index:100}
+.lbox{background:var(--surface);border:1px solid var(--br2);border-radius:16px;padding:40px 44px;width:440px;box-shadow:0 8px 40px rgba(0,0,0,0.08)}
+.llogo{display:flex;justify-content:center;margin-bottom:28px}
+.llogo img{height:40px;object-fit:contain}
+.ldiv{height:1px;background:var(--br);margin-bottom:22px}
+.ltitle{font-size:19px;font-weight:600;margin-bottom:4px;letter-spacing:-.3px}
+.lsub{font-size:12px;color:var(--tx2);margin-bottom:20px}
+.lhint{background:var(--s2);border:1px solid var(--br);border-left:3px solid var(--red);border-radius:8px;padding:11px 13px;margin-bottom:16px;font-size:12px;color:var(--tx2);line-height:1.7}
+.lhint strong{color:var(--red)}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:10px;font-weight:700;color:var(--tx2);margin-bottom:4px;letter-spacing:.5px;text-transform:uppercase}
+.field select,.field input{width:100%;background:var(--s2);border:1px solid var(--br2);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--tx);outline:none;transition:.2s}
+.field select:focus,.field input:focus{border-color:var(--red)}
+.field select option{background:#fff}
+.lbtn{width:100%;background:var(--red);color:#fff;border:none;border-radius:8px;padding:12px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:.2s}
+.lbtn:hover{background:#a02228}
+.lfooter{text-align:center;margin-top:12px;font-size:11px;color:var(--tx3)}
+
+/* APP */
+#app{display:none;height:100vh;overflow:hidden;flex-direction:column}
+#app.visible{display:flex}
+
+/* TOPBAR */
+.topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--br2);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.tb-logo img{height:30px;object-fit:contain}
+.tb-sep{width:1px;height:20px;background:var(--br2)}
+.tb-bc{font-size:12px;color:var(--tx3);display:flex;align-items:center;gap:5px}
+.tb-bc span{color:var(--tx2)}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-bell{position:relative;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:7px;cursor:pointer;border:1px solid var(--br2);background:var(--s2);color:var(--tx2)}
+.adot{position:absolute;top:5px;right:5px;width:6px;height:6px;background:var(--red);border-radius:50%;border:2px solid var(--surface)}
+.tb-user{display:flex;align-items:center;gap:8px;padding:4px 11px 4px 5px;border-radius:9px;cursor:pointer;border:1px solid var(--br);background:var(--s2)}
+.tb-av{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
+.tb-nm{font-size:12px;font-weight:500}
+.tb-rl{font-size:10px;color:var(--tx3)}
+.tb-out{font-size:11px;color:var(--tx3);cursor:pointer;padding:4px 9px;border-radius:6px;border:1px solid var(--br)}
+.tb-out:hover{color:var(--red);border-color:var(--red)}
+
+/* LAYOUT */
+.app-body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:216px;background:var(--surface);border-right:1px solid var(--br2);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;padding:10px 8px}
+.sb-sec{margin-bottom:16px}
+.sb-lbl{font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:.9px;text-transform:uppercase;padding:0 8px 5px}
+.nav{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;cursor:pointer;color:var(--tx2);font-size:12px;transition:.15s;margin-bottom:1px;user-select:none}
+.nav:hover{background:var(--bg2);color:var(--tx)}
+.nav.on{background:var(--rl);color:var(--red);font-weight:600}
+.nav-ico{font-size:13px;width:15px;text-align:center;flex-shrink:0}
+.nbadge{margin-left:auto;font-size:9px;font-weight:700;padding:1px 5px;border-radius:7px;background:var(--red);color:#fff}
+.nbadge.a{background:var(--amb)}
+.nbadge.t{background:var(--teal)}
+.nbadge.b{background:var(--blue)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:22px 24px;background:var(--bg)}
+.panel{display:none}.panel.on{display:block}
+.role-view{display:none}.role-view.on{display:block}
+
+/* TYPOGRAPHY */
+.ptitle{font-size:19px;font-weight:600;letter-spacing:-.4px;margin-bottom:3px}
+.psub{font-size:12px;color:var(--tx3);margin-bottom:18px}
+.stitle{font-size:11px;font-weight:700;color:var(--tx);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.sep{height:1px;background:var(--br);margin:14px 0}
+
+/* STATS */
+.sr4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px}
+.sr3{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:18px}
+.sr2{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:18px}
+.sc{background:var(--surface);border:1px solid var(--br);border-radius:11px;padding:15px 17px;box-shadow:0 1px 3px rgba(0,0,0,0.03)}
+.sc-lbl{font-size:10px;color:var(--tx3);font-weight:600;letter-spacing:.3px;text-transform:uppercase;margin-bottom:5px}
+.sc-val{font-size:24px;font-weight:700;letter-spacing:-1px;font-family:'DM Mono',monospace}
+.sc-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+.sc-up{font-size:11px;font-weight:500;margin-top:3px;color:var(--grn)}
+.sc-dn{font-size:11px;font-weight:500;margin-top:3px;color:var(--rm)}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:14px}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--br);border-radius:11px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,0.03)}
+.card-last{margin-bottom:0}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;padding-bottom:11px;border-bottom:1px solid var(--br)}
+.ct{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
+
+/* BADGES */
+.b{display:inline-flex;align-items:center;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap}
+.tl{background:var(--tl);color:var(--teal)}
+.bl{background:var(--bl);color:var(--blue)}
+.am{background:var(--al);color:var(--amb)}
+.rd{background:var(--rl);color:var(--red)}
+.gn{background:var(--gl);color:var(--grn)}
+.pu{background:var(--pl);color:var(--pur)}
+.gy{background:var(--bg2);color:var(--tx2)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;border:1px solid var(--br2);background:var(--s2);color:var(--tx);transition:.15s}
+.btn:hover{background:var(--bg2)}
+.btn.pri{background:var(--red);color:#fff;border-color:var(--red)}
+.btn.pri:hover{background:#a02228}
+.btn.sm{padding:5px 10px;font-size:11px}
+.btn.dan{background:var(--rl);color:var(--red);border-color:rgba(192,39,45,0.22)}
+.btn.sec{background:var(--bl);color:var(--blue);border-color:rgba(26,95,191,0.22)}
+
+/* TABLE */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{text-align:left;padding:7px 9px;font-size:10px;font-weight:700;color:var(--tx3);letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--br2);background:var(--s2)}
+tbody td{padding:9px 9px;border-bottom:1px solid var(--br);color:var(--tx);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--s2);cursor:pointer}
+.an{font-weight:600;font-size:12px}
+.ai{font-size:10px;color:var(--tx3);font-family:'DM Mono',monospace}
+
+/* SEMAFORO */
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dg{background:var(--tm)}.da{background:var(--amb)}.dr{background:var(--rm)}
+.s2c{display:flex;align-items:center;gap:5px}
+
+/* ALERTS */
+.al{display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:9px;font-size:12px;margin-bottom:9px;border-left:3px solid}
+.al.wa{background:var(--al);color:var(--amb);border-color:var(--amb)}
+.al.da{background:var(--rl);color:var(--red);border-color:var(--red)}
+.al.su{background:var(--gl);color:var(--grn);border-color:var(--grn)}
+.al.in{background:var(--bl);color:var(--blue);border-color:var(--blue)}
+.al.pu{background:var(--pl);color:var(--pur);border-color:var(--pur)}
+
+/* PROGRESS */
+.pw{margin-bottom:9px}
+.ph{display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px}
+.pt{height:5px;background:var(--bg2);border-radius:3px;overflow:hidden}
+.pf{height:100%;border-radius:3px}
+
+/* TIMELINE */
+.tl{position:relative;padding-left:19px}
+.tl::before{content:'';position:absolute;left:5px;top:7px;bottom:7px;width:1px;background:var(--br2)}
+.tli{position:relative;margin-bottom:13px}
+.tldot{position:absolute;left:-19px;top:3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--surface)}
+.tldot.dn{background:var(--tm)}.tldot.ac{background:var(--amb)}.tldot.pe{background:var(--bg2)}
+.tll{font-size:12px;font-weight:500}
+.tls{font-size:11px;color:var(--tx3);margin-top:1px}
+
+/* FORMS */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:11px}
+.fl{font-size:10px;font-weight:700;color:var(--tx2);letter-spacing:.3px;text-transform:uppercase}
+.fi,.fs,.fta{padding:8px 11px;border:1px solid var(--br2);border-radius:7px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--tx);background:var(--s2);outline:none;transition:.15s}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--red);background:var(--surface)}
+.fta{resize:vertical;min-height:60px}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-bottom:11px}
+
+/* COMPROMISOS */
+.cbox{background:var(--pl);border:1px solid rgba(92,61,181,0.14);border-radius:9px;padding:12px;margin-bottom:8px}
+.chd{font-size:12px;font-weight:600;color:var(--pur);margin-bottom:7px}
+.ctxt{font-size:12px;color:var(--tx2);line-height:1.6}
+.cin{width:100%;background:var(--surface);border:1px solid rgba(92,61,181,0.22);border-radius:6px;padding:7px 10px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--tx);outline:none;margin-top:7px}
+
+/* MONITOREO */
+.mcard{background:var(--al);border:1px solid rgba(192,122,16,0.14);border-radius:9px;padding:13px;margin-bottom:9px}
+.mhd{font-size:12px;font-weight:600;color:var(--amb);margin-bottom:9px}
+
+/* KPI ROW */
+.kr{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--br)}
+.kr:last-child{border-bottom:none}
+.kn{font-size:12px;font-weight:500;flex:1}
+.kv{font-family:'DM Mono',monospace;font-size:13px;font-weight:500}
+.ku{font-size:11px;padding:2px 7px;border-radius:7px;background:var(--gl);color:var(--grn)}
+.kd{font-size:11px;padding:2px 7px;border-radius:7px;background:var(--rl);color:var(--red)}
+.kne{font-size:11px;padding:2px 7px;border-radius:7px;background:var(--bg2);color:var(--tx3)}
+
+/* EVAL GRID */
+.eg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:11px}
+.ec{padding:11px;border:1px solid var(--br);border-radius:8px;background:var(--s2)}
+.en{font-size:11px;font-weight:600;margin-bottom:4px;color:var(--tx2)}
+.esw{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.escore{font-size:17px;font-weight:700;font-family:'DM Mono',monospace}
+
+/* AGENDA */
+.agi{display:flex;gap:13px;padding:11px 0;border-bottom:1px solid var(--br)}
+.agi:last-child{border-bottom:none}
+.agt{min-width:52px;text-align:center}
+.agd{font-size:19px;font-weight:700;font-family:'DM Mono',monospace;color:var(--red);line-height:1}
+.agday{font-size:10px;color:var(--tx3);margin-top:1px;text-transform:uppercase;letter-spacing:.4px}
+.agb{flex:1}
+.agtit{font-size:12px;font-weight:600;margin-bottom:3px}
+.agmet{font-size:11px;color:var(--tx3)}
+
+/* ACTA */
+.acta{background:var(--s2);border:1px solid var(--br2);border-radius:9px;padding:15px;font-size:12px;line-height:1.8}
+.acta-hd{text-align:center;font-weight:700;font-size:12px;margin-bottom:11px;padding-bottom:9px;border-bottom:2px solid var(--red);color:var(--red);text-transform:uppercase;letter-spacing:.5px}
+.acta-r{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--br)}
+.acta-k{color:var(--tx2)}
+
+/* LOG ITEMS */
+.log{display:flex;gap:9px;padding:9px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--br);margin-bottom:6px;font-size:12px}
+.log-ico{font-size:15px;flex-shrink:0}
+.log-act{font-weight:500}
+.log-met{font-size:11px;color:var(--tx3);margin-top:1px}
+
+/* CHART BARS (CSS only) */
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:100px;padding-top:8px}
+.bar-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:4px}
+.bar-fill{width:100%;border-radius:4px 4px 0 0;transition:height .4s}
+.bar-label{font-size:10px;color:var(--tx3);text-align:center;white-space:nowrap}
+.bar-val{font-size:10px;font-weight:600;color:var(--tx2)}
+
+/* PILL TABS */
+.ptabs{display:flex;gap:4px;margin-bottom:14px;background:var(--s2);border-radius:9px;padding:4px}
+.ptab{flex:1;text-align:center;padding:6px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--tx2);transition:.15s}
+.ptab.on{background:var(--surface);color:var(--red);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+
+/* PERFIL CARD */
+.pcard{background:var(--s2);border:1px solid var(--br);border-radius:8px;padding:12px;margin-bottom:8px}
+.pcard-hd{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pav{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.pnm{font-size:13px;font-weight:600}
+.prl{font-size:11px;color:var(--tx3)}
+
+/* CHECKLIST */
+.cklist{list-style:none}
+.cklist li{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--br);font-size:12px}
+.cklist li:last-child{border-bottom:none}
+.ck{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--br2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px}
+.ck.done{background:var(--teal);border-color:var(--teal);color:#fff}
+.ck.pend{border-color:var(--amb)}
+
+/* RETRO CASILLA */
+.rcasilla{border:1px solid var(--br2);border-radius:9px;padding:13px;margin-bottom:10px}
+.rcasilla-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="lstripe"></div>
+  <div class="lbox">
+    <div class="llogo"><img src="data:image/jpeg;base64,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" alt="GroupCos"></div>
+    <div class="ldiv"></div>
+    <div class="ltitle">Acceder a la plataforma</div>
+    <div class="lsub">Módulo de Formación y Desarrollo · GroupCOS BPO</div>
+    <div class="lhint">
+      <strong>Usuarios de prueba:</strong><br>
+      agente · formador · analista · supervisor<br>
+      lider · jefe_fc · jefe_ops · admin<br>
+      <span style="color:var(--gry)">Contraseña: <strong style="color:var(--red)">demo2026</strong></span>
+    </div>
+    <div class="field">
+      <label>Perfil de acceso</label>
+      <select id="login-user">
+        <option value="">Selecciona un usuario de prueba...</option>
+        <option value="agente">Carlos Mendoza — Agente · Campaña Piloto</option>
+        <option value="formador">Luis Mora — Formador · Campaña Piloto</option>
+        <option value="analista">Sandra Ríos — Analista de Calidad</option>
+        <option value="supervisor">Diego Ruiz — Supervisor</option>
+        <option value="lider">Mónica Vega — Líder F&C · 4 cuentas</option>
+        <option value="jefe_fc">Jefe F&C (Tu perfil) — Todas las cuentas</option>
+        <option value="jefe_ops">Hernán Cárdenas — Jefe de Operaciones</option>
+        <option value="admin">Administrador General</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" value="demo2026">
+    </div>
+    <button class="lbtn" onclick="doLogin()">Ingresar</button>
+    <div class="lfooter">GroupCOS BPO · Making experiences · Uso interno restringido</div>
+  </div>
+</div>
+
+<div id="app">
+
+<div class="topbar">
+  <div class="tb-logo"><img src="data:image/jpeg;base64,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" alt="GroupCos"></div>
+  <div class="tb-sep"></div>
+  <div class="tb-bc">Formación y Desarrollo · <span id="tb-mod">Inicio</span></div>
+  <div class="tb-r">
+    <div class="tb-bell">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1.5C4.5 1.5 2.5 3.5 2.5 6V9L1 10.5V11H13V10.5L11.5 9V6C11.5 3.5 9.5 1.5 7 1.5Z" stroke="#9CA3B0" stroke-width="1.2" fill="none"/><path d="M5.5 11.5C5.5 12.3 6.2 13 7 13C7.8 13 8.5 12.3 8.5 11.5" stroke="#9CA3B0" stroke-width="1.2" fill="none"/></svg>
+      <div class="adot" id="alert-dot"></div>
+    </div>
+    <div class="tb-user">
+      <div class="tb-av" id="tb-av"><span id="tb-ini">--</span></div>
+      <div><div class="tb-nm" id="tb-nm">Usuario</div><div class="tb-rl" id="tb-rl">Rol</div></div>
+    </div>
+    <div class="tb-out" onclick="doLogout()">Salir</div>
+  </div>
+</div>
+
+<div class="app-body">
+<nav class="sidebar" id="sidebar"></nav>
+<div class="content" id="content-area">
+
+<div class="role-view" id="view-agente">
+
+<!-- INICIO -->
+<div id="agente-inicio" class="panel on">
+  <div class="ptitle">Mi panel de formación</div>
+  <div class="psub">Carlos Mendoza · Agente · Campaña Piloto · Ingresó hoy 07:58 AM</div>
+  <div class="al da"><div><strong>Compromiso pendiente:</strong> Tienes 1 compromiso sin registrar frente a la retroalimentación de Luis Mora en el módulo 4.</div></div>
+  <div class="al in"><div><strong>Formación programada:</strong> "Manejo de objeciones avanzado" — Jue 20 mar · 8:00 AM · Virtual</div></div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Promedio evaluaciones</div><div class="sc-val" style="color:var(--teal)">83%</div><div class="sc-sub">3 módulos completados</div></div>
+    <div class="sc"><div class="sc-lbl">Role play M3</div><div class="sc-val" style="color:var(--grn)">88%</div><div class="sc-sub">Calificado por formador</div></div>
+    <div class="sc"><div class="sc-lbl">Mi asistencia</div><div class="sc-val" style="color:var(--blue)">96%</div><div class="sc-sub">23/24 días presentes</div></div>
+    <div class="sc"><div class="sc-lbl">Compromisos activos</div><div class="sc-val" style="color:var(--amb)">1</div><div class="sc-sub">Pendiente de registrar</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Mi estado en formación inicial</div><span class="b tl">Wave Piloto 04 · Día 4</span></div>
+      <div class="tl">
+        <div class="tli"><div class="tldot dn"></div><div class="tll">M1 Producto · 91% ✓</div><div class="tls">1er intento · Aprobado</div></div>
+        <div class="tli"><div class="tldot dn"></div><div class="tll">M2 Sistema · 85% ✓</div><div class="tls">2do intento · Aprobado</div></div>
+        <div class="tli"><div class="tldot dn"></div><div class="tll">M3 Calidad · 88% + Role play 88% ✓</div><div class="tls">1er intento · Aprobado</div></div>
+        <div class="tli"><div class="tldot ac"></div><div class="tll">M4 Objeciones · 62% — En recuperación 1</div><div class="tls">Compromiso pendiente con formador</div></div>
+        <div class="tli"><div class="tldot pe"></div><div class="tll">M5 Proceso · Pendiente</div><div class="tls">Programado 18 mar</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Próximas formaciones</div></div>
+      <div class="agi">
+        <div class="agt"><div class="agd">20</div><div class="agday">Mar</div></div>
+        <div class="agb"><div class="agtit">Manejo de objeciones avanzado</div><div class="agmet">8:00 AM · Virtual · 2h · Luis Mora</div><div style="margin-top:3px"><span class="b bl">Programada</span></div></div>
+      </div>
+      <div class="agi">
+        <div class="agt"><div class="agd">25</div><div class="agday">Mar</div></div>
+        <div class="agb"><div class="agtit">Calidad en gestión de llamadas</div><div class="agmet">9:00 AM · Presencial · 1.5h · Andrea Pérez</div><div style="margin-top:3px"><span class="b bl">Programada</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FORMACIÓN INICIAL -->
+<div id="agente-inicial" class="panel">
+  <div class="ptitle">Mi formación inicial</div>
+  <div class="psub">Wave Piloto 04 · Grupo 12 · 10 mar – 24 mar 2026</div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Mi promedio</div><div class="sc-val" style="color:var(--teal)">83%</div><div class="sc-sub">3 módulos cerrados</div></div>
+    <div class="sc"><div class="sc-lbl">Mi asistencia</div><div class="sc-val" style="color:var(--grn)">96%</div><div class="sc-sub">23/24 días</div></div>
+    <div class="sc"><div class="sc-lbl">Módulos aprobados</div><div class="sc-val" style="color:var(--blue)">3/5</div><div class="sc-sub">M4 en recuperación</div></div>
+    <div class="sc"><div class="sc-lbl">Role plays</div><div class="sc-val" style="color:var(--grn)">88%</div><div class="sc-sub">M3 calificado</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Mis evaluaciones por módulo</div></div>
+      <div class="eg">
+        <div class="ec"><div class="en">M1 · Producto</div><div class="esw"><span class="escore" style="color:var(--grn)">91%</span><span class="b gn">✓ Aprobado</span></div><div style="font-size:10px;color:var(--tx3)">1er intento · 10 mar</div></div>
+        <div class="ec"><div class="en">M2 · Sistema</div><div class="esw"><span class="escore" style="color:var(--grn)">85%</span><span class="b gn">✓ Aprobado</span></div><div style="font-size:10px;color:var(--tx3)">2do intento · 12 mar</div></div>
+        <div class="ec"><div class="en">M3 · Calidad</div><div class="esw"><span class="escore" style="color:var(--grn)">88%</span><span class="b gn">✓ Aprobado</span></div><div style="font-size:10px;color:var(--grn)">Role play: 88% ✓</div></div>
+        <div class="ec" style="background:var(--rl);border-color:rgba(192,39,45,0.18)"><div class="en">M4 · Objeciones</div><div class="esw"><span class="escore" style="color:var(--red)">62%</span><span class="b rd">Recup. 1</span></div><div style="font-size:10px;color:var(--red)">Compriso pendiente</div></div>
+        <div class="ec"><div class="en">M5 · Proceso</div><div class="esw"><span class="escore" style="color:var(--tx3)">—</span><span class="b gy">Pendiente</span></div><div style="font-size:10px;color:var(--tx3)">18 mar</div></div>
+        <div class="ec" style="background:var(--tl);border-color:rgba(13,122,95,0.18)"><div class="en" style="color:var(--teal)">Mi promedio</div><div class="esw"><span class="escore" style="color:var(--teal)">83%</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Mi historial de asistencia</div></div>
+      <table><thead><tr><th>Día</th><th>Fecha</th><th>Entrada</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>Día 1</td><td>10 mar</td><td class="mono" style="color:var(--grn)">07:58 AM</td><td><span class="b gn">A tiempo</span></td></tr>
+        <tr><td>Día 2</td><td>11 mar</td><td class="mono" style="color:var(--grn)">07:59 AM</td><td><span class="b gn">A tiempo</span></td></tr>
+        <tr><td>Día 3</td><td>12 mar</td><td class="mono" style="color:var(--amb)">08:12 AM</td><td><span class="b am">Tarde</span></td></tr>
+        <tr><td>Día 4</td><td>13 mar</td><td class="mono" style="color:var(--grn)">07:57 AM</td><td><span class="b gn">A tiempo</span></td></tr>
+        <tr><td>Día 5</td><td>14 mar</td><td class="mono" style="color:var(--tx3)">—</td><td><span class="b gy">Ausente</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- OJT -->
+<div id="agente-ojt" class="panel">
+  <div class="ptitle">Mi desempeño OJT</div>
+  <div class="psub">Día 3 de 6 · Wave Piloto 04 · Supervisor: Diego Ruiz</div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">AHT hoy</div><div class="sc-val" style="color:var(--amb)">5:42</div><div class="sc-sub">Meta: ≤ 4:30</div><div class="sc-dn">↓ Bajo meta</div></div>
+    <div class="sc"><div class="sc-lbl">Calidad</div><div class="sc-val" style="color:var(--grn)">87%</div><div class="sc-sub">Meta: ≥ 85%</div><div class="sc-up">↑ En meta</div></div>
+    <div class="sc"><div class="sc-lbl">CSAT</div><div class="sc-val" style="color:var(--grn)">4.4</div><div class="sc-sub">Meta: ≥ 4.2</div><div class="sc-up">↑ En meta</div></div>
+    <div class="sc"><div class="sc-lbl">Compromisos OJT</div><div class="sc-val" style="color:var(--teal)">2</div><div class="sc-sub">Registrados</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Mis indicadores por día</div><span class="b am">AHT en riesgo</span></div>
+      <table><thead><tr><th>Día</th><th>AHT</th><th>Calidad</th><th>CSAT</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>Día 1</td><td class="s2c"><span class="dot dg"></span><span class="mono">4:15</span></td><td class="s2c"><span class="dot dg"></span>89%</td><td class="s2c"><span class="dot dg"></span>4.5</td><td><span class="b gn">En meta</span></td></tr>
+        <tr><td>Día 2</td><td class="s2c"><span class="dot da"></span><span class="mono">5:10</span></td><td class="s2c"><span class="dot dg"></span>86%</td><td class="s2c"><span class="dot dg"></span>4.3</td><td><span class="b am">Seguimiento</span></td></tr>
+        <tr><td>Día 3</td><td class="s2c"><span class="dot dr"></span><span class="mono">5:42</span></td><td class="s2c"><span class="dot dg"></span>87%</td><td class="s2c"><span class="dot dg"></span>4.4</td><td><span class="b rd">AHT riesgo</span></td></tr>
+      </tbody></table>
+      <div class="sep"></div>
+      <div style="font-size:11px;color:var(--tx2)"><strong>Meta OJT:</strong> AHT ≤ 4:30 · Calidad ≥ 85% · CSAT ≥ 4.2</div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Retroalimentaciones en OJT</div></div>
+      <div class="mcard">
+        <div class="mhd">Sandra Ríos (Analista Calidad) · 16 mar</div>
+        <div style="font-size:11px;margin-bottom:4px"><span class="mono" style="color:var(--blue)">CALL-20240316-4521</span> · Fecha llamada: 15 mar</div>
+        <div style="font-size:11px;color:var(--grn);font-weight:500;margin-bottom:2px">✓ Buen manejo de bienvenida y verificación de datos.</div>
+        <div style="font-size:11px;color:var(--red);font-weight:500;margin-bottom:2px">✗ Tiempo excesivo en consulta al CRM.</div>
+        <div style="font-size:11px;color:var(--blue);font-weight:500">→ Practicar atajos de teclado del sistema.</div>
+      </div>
+      <div class="cbox">
+        <div class="chd">Diego Ruiz (Supervisor) · 15 mar</div>
+        <div class="ctxt">Buen manejo de la bienvenida. Necesitas trabajar en la velocidad de digitación para reducir el AHT.</div>
+        <div style="font-size:10px;color:var(--pur);margin-top:7px;margin-bottom:3px;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Mi compromiso:</div>
+        <div style="font-size:12px;color:var(--tx);font-style:italic">"Practicaré el proceso en el sistema durante el break. Meta: bajar a 4:00 en el día 4."</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FORMACIONES CONTINUAS -->
+<div id="agente-continua" class="panel">
+  <div class="ptitle">Mis formaciones continuas</div>
+  <div class="psub">Campaña Piloto · Marzo 2026</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Agenda de capacitaciones</div></div>
+    <div class="agi">
+      <div class="agt"><div class="agd">20</div><div class="agday">Mar</div></div>
+      <div class="agb">
+        <div class="agtit">Manejo de objeciones avanzado</div>
+        <div class="agmet">8:00 AM · Virtual · 2h · Luis Mora · KPI: FCR 71% → meta 85%</div>
+        <div style="margin-top:4px"><span class="b bl">Programada</span> <span style="font-size:11px;color:var(--tx3);margin-left:6px">Evaluación habilitará al registrar asistencia</span></div>
+      </div>
+    </div>
+    <div class="agi">
+      <div class="agt"><div class="agd">14</div><div class="agday">Mar</div></div>
+      <div class="agb">
+        <div class="agtit">Tipificación correcta</div>
+        <div class="agmet">9:00 AM · Virtual · 1.5h · Luis Mora · Mi resultado: 80% · Encuesta: 4.6/5</div>
+        <div style="margin-top:4px;display:flex;gap:7px;flex-wrap:wrap">
+          <span class="b gn">Completada</span>
+          <span style="font-size:11px;color:var(--tx3)">Mi KPI inicial: 68% · K3 aplicabilidad: <span style="color:var(--amb)">Pendiente</span> · KPI final: <span style="color:var(--tx3)">Día 8 aún no</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="agi">
+      <div class="agt"><div class="agd">10</div><div class="agday">Mar</div></div>
+      <div class="agb">
+        <div class="agtit">Manejo de objeciones — versión básica</div>
+        <div class="agmet">8:00 AM · Presencial · 2h · Luis Mora · Mi resultado: 87%</div>
+        <div style="margin-top:4px;display:flex;gap:7px;flex-wrap:wrap">
+          <span class="b gn">Completada</span>
+          <span style="font-size:11px;color:var(--tx3)">K3: 74% aplicabilidad · KPI: FCR 71% → 76% (+5pts)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRETURNOS -->
+<div id="agente-preturnos" class="panel">
+  <div class="ptitle">Mis preturnos</div>
+  <div class="psub">Campaña Piloto · Registros del mes</div>
+  <div class="sr3">
+    <div class="sc"><div class="sc-lbl">Preturnos completados</div><div class="sc-val" style="color:var(--teal)">8</div><div class="sc-sub">Este mes</div></div>
+    <div class="sc"><div class="sc-lbl">Promedio de notas</div><div class="sc-val" style="color:var(--grn)">86%</div><div class="sc-sub">Últimos 8 preturnos</div></div>
+    <div class="sc"><div class="sc-lbl">Pendiente</div><div class="sc-val" style="color:var(--tx3)">0</div><div class="sc-sub">Al día</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Historial de preturnos</div></div>
+    <table><thead><tr><th>Fecha</th><th>Tema</th><th>Supervisor</th><th>Preguntas</th><th>Mi nota</th></tr></thead>
+    <tbody>
+      <tr><td>16 mar</td><td>Tipificación — repaso rápido</td><td>Diego Ruiz</td><td>3</td><td class="s2c"><span class="dot dg"></span>90%</td></tr>
+      <tr><td>15 mar</td><td>Protocolo de bienvenida</td><td>Diego Ruiz</td><td>3</td><td class="s2c"><span class="dot dg"></span>100%</td></tr>
+      <tr><td>14 mar</td><td>Objeciones de precio</td><td>Sandra Gil</td><td>4</td><td class="s2c"><span class="dot da"></span>75%</td></tr>
+      <tr><td>13 mar</td><td>Escalamiento correcto</td><td>Diego Ruiz</td><td>3</td><td class="s2c"><span class="dot dg"></span>85%</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<!-- COMPROMISOS -->
+<div id="agente-compromisos" class="panel">
+  <div class="ptitle">Mis compromisos</div>
+  <div class="psub">Compromisos activos frente a retroalimentaciones recibidas</div>
+  <div class="al da"><div><strong>1 compromiso pendiente</strong> — debes registrarlo antes de presentar la recuperación del módulo 4.</div></div>
+  <div class="card">
+    <div class="ch"><div class="ct">Pendientes</div><span class="b rd">1</span></div>
+    <div class="cbox">
+      <div class="chd">Luis Mora (Formador) · M4 Objeciones · 15 mar</div>
+      <div class="ctxt">"Carlos, tienes buen dominio del producto pero presentas dificultad al rebatir la objeción de precio. Practica la escalera de 3 pasos antes de la recuperación."</div>
+      <div style="font-size:10px;color:var(--pur);margin-top:7px;margin-bottom:3px;font-weight:700;text-transform:uppercase">Tu compromiso (obligatorio):</div>
+      <textarea class="cin" rows="2" placeholder="Escribe tu compromiso específico frente a esta retroalimentación..."></textarea>
+      <button class="btn pri sm" style="margin-top:7px;width:100%">Registrar compromiso</button>
+    </div>
+  </div>
+  <div class="card card-last">
+    <div class="ch"><div class="ct">Compromisos registrados</div><span class="b gn">3 completados</span></div>
+    <table><thead><tr><th>Fecha</th><th>Retroalimentó</th><th>Mi compromiso</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>15 mar</td><td>Diego Ruiz (Sup.)</td><td>"Practicaré atajos CRM en el break"</td><td><span class="b gn">Registrado</span></td></tr>
+      <tr><td>14 mar</td><td>Sandra Ríos (Cal.)</td><td>"Reduciré tiempo de consulta a máx 30 seg"</td><td><span class="b gn">Registrado</span></td></tr>
+      <tr><td>12 mar</td><td>Luis Mora (Form.)</td><td>"Revisaré guión de objeciones cada día"</td><td><span class="b gn">Registrado</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<!-- CALIFICACIONES -->
+<div id="agente-calificaciones" class="panel">
+  <div class="ptitle">Mis calificaciones</div>
+  <div class="psub">Resumen completo de resultados por módulo y actividad</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Formación inicial — Wave Piloto 04</div></div>
+      <table><thead><tr><th>Módulo</th><th>Eval.</th><th>Intento</th><th>Role Play</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>M1 · Producto</td><td class="mono">91%</td><td>1ro</td><td>—</td><td><span class="b gn">Aprobado</span></td></tr>
+        <tr><td>M2 · Sistema</td><td class="mono">85%</td><td>2do</td><td>—</td><td><span class="b gn">Aprobado</span></td></tr>
+        <tr><td>M3 · Calidad</td><td class="mono">88%</td><td>1ro</td><td class="mono" style="color:var(--grn)">88%</td><td><span class="b gn">Aprobado</span></td></tr>
+        <tr><td>M4 · Objeciones</td><td class="mono" style="color:var(--red)">62%</td><td>1ro</td><td>Pendiente</td><td><span class="b rd">Recuperación 1</span></td></tr>
+        <tr><td>M5 · Proceso</td><td class="mono" style="color:var(--tx3)">—</td><td>—</td><td>—</td><td><span class="b gy">Pendiente</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Formaciones continuas</div></div>
+      <table><thead><tr><th>Formación</th><th>Fecha</th><th>Eval.</th><th>Encuesta</th></tr></thead>
+      <tbody>
+        <tr><td>Manejo objeciones</td><td>10 mar</td><td class="mono">87%</td><td class="mono">4.5/5</td></tr>
+        <tr><td>Tipificación correcta</td><td>14 mar</td><td class="mono">80%</td><td class="mono">4.6/5</td></tr>
+        <tr><td>Obj. avanzado</td><td>20 mar</td><td class="mono" style="color:var(--tx3)">—</td><td class="mono" style="color:var(--tx3)">—</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- RETROALIMENTACIONES -->
+<div id="agente-retroalimentaciones" class="panel">
+  <div class="ptitle">Mis retroalimentaciones</div>
+  <div class="psub">Todas las retroalimentaciones recibidas de cada rol</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Del formador</div><span class="b tl">Luis Mora</span></div>
+    <div class="cbox">
+      <div class="chd">M4 · Objeciones · 15 mar 2026</div>
+      <div class="ctxt">"Tienes buen dominio del producto pero dificultad al rebatir objeción de precio. Practica la escalera de 3 pasos."</div>
+      <div style="font-size:11px;color:var(--pur);margin-top:6px;font-weight:600">Compromiso: <span style="color:var(--red)">Pendiente de registrar</span></div>
+    </div>
+    <div class="cbox" style="background:var(--gl);border-color:rgba(26,122,64,0.14)">
+      <div class="chd" style="color:var(--grn)">M2 · Sistema · 12 mar 2026</div>
+      <div class="ctxt">"Mejoró notablemente en el segundo intento. Buen manejo del sistema de consultas."</div>
+      <div style="font-size:11px;color:var(--grn);margin-top:6px;font-weight:600">Compromiso: "Seguiré practicando la navegación." ✓</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Del analista de calidad</div><span class="b am">Sandra Ríos</span></div>
+    <div class="mcard">
+      <div class="mhd">Monitoreo OJT · 16 mar · ID: CALL-20240316-4521</div>
+      <div style="font-size:11px;color:var(--grn);font-weight:500;margin-bottom:2px">✓ Buen manejo de bienvenida.</div>
+      <div style="font-size:11px;color:var(--red);font-weight:500;margin-bottom:2px">✗ Tiempo excesivo en consulta CRM.</div>
+      <div style="font-size:11px;color:var(--blue);font-weight:500">→ Practicar atajos de teclado.</div>
+      <div style="font-size:11px;color:var(--grn);margin-top:6px;font-weight:600">Compromiso: "Reduciré consulta a máx 30 seg." ✓</div>
+    </div>
+  </div>
+  <div class="card card-last">
+    <div class="ch"><div class="ct">Del supervisor</div><span class="b pu">Diego Ruiz</span></div>
+    <div class="cbox" style="background:var(--pl);border-color:rgba(92,61,181,0.14)">
+      <div class="chd">OJT Día 2 · 15 mar</div>
+      <div class="ctxt">"Buen manejo de bienvenida. Necesitas mejorar velocidad de digitación para reducir AHT."</div>
+      <div style="font-size:11px;color:var(--pur);margin-top:6px;font-weight:600">Compromiso: "Practicaré en break. Meta: 4:00 el día 4." ✓</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+<div class="role-view" id="view-formador">
+
+<!-- INICIO -->
+<div id="formador-inicio" class="panel on">
+  <div class="ptitle">Mi panel de formación</div>
+  <div class="psub">Luis Mora · Formador · Campaña Piloto</div>
+  <div class="al da"><div><strong>Retiro sin documentar:</strong> Jhon Ramírez — marca retiro, carga motivo e intentos de retención. SLA vence hoy.</div></div>
+  <div class="al wa"><div><strong>KPI final pendiente:</strong> MAN-02 "Tipificación correcta" — día 8 vence hoy. Carga el resultado post-formación.</div></div>
+  <div class="al su"><div><strong>Compromiso registrado:</strong> Carlos Mendoza respondió tu retroalimentación del M4.</div></div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Grupos activos</div><div class="sc-val" style="color:var(--teal)">2</div><div class="sc-sub">1 inicial · 1 OJT</div></div>
+    <div class="sc"><div class="sc-lbl">Act. continua</div><div class="sc-val" style="color:var(--blue)">3</div><div class="sc-sub">Mes en curso</div></div>
+    <div class="sc"><div class="sc-lbl">Aprobación global</div><div class="sc-val" style="color:var(--grn)">83%</div><div class="sc-up">↑ vs onda anterior</div></div>
+    <div class="sc"><div class="sc-lbl">Tareas pendientes</div><div class="sc-val" style="color:var(--red)">3</div><div class="sc-sub">Retiro · KPI · Retro.</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Estado Wave Piloto 04</div><span class="b tl">Día 4 de 10</span></div>
+      <div class="tl">
+        <div class="tli"><div class="tldot dn"></div><div class="tll">MAN aprobado por Líder F&C</div><div class="tls">10 mar · Mónica Vega</div></div>
+        <div class="tli"><div class="tldot dn"></div><div class="tll">Pre-test aplicado — brecha M4 detectada</div><div class="tls">11 mar · 42% del grupo con debilidad en objeciones</div></div>
+        <div class="tli"><div class="tldot dn"></div><div class="tll">Piloto ejecutado (scorecard: 92/100)</div><div class="tls">12 mar · Aprobado para formación masiva</div></div>
+        <div class="tli"><div class="tldot ac"></div><div class="tll">Ejecución en curso · M1-M3 cerrados</div><div class="tls">M4 en recuperación · M5 pendiente 18 mar</div></div>
+        <div class="tli"><div class="tldot pe"></div><div class="tll">OJT — inicia 20 mar</div><div class="tls">Supervisor pendiente de asignación</div></div>
+        <div class="tli"><div class="tldot pe"></div><div class="tll">Acta de entrega</div><div class="tls">Pendiente</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Estado formación continua</div><span class="b bl">Marzo 2026</span></div>
+      <table><thead><tr><th>#</th><th>Actividad</th><th>K2</th><th>K3</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>MAN-01</td><td>Manejo objeciones</td><td class="s2c"><span class="dot dg"></span>87%</td><td><span class="b am">Solicitado</span></td><td><span class="b am">K3 pend.</span></td></tr>
+        <tr><td>MAN-02</td><td>Tipificación correcta</td><td class="s2c"><span class="dot dg"></span>80%</td><td><span class="b rd">No inic.</span></td><td><span class="b bl">KPI día 8</span></td></tr>
+        <tr><td>MAN-03</td><td>Calidad en gestión</td><td>—</td><td>—</td><td><span class="b gy">20 mar</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- FORMACIÓN INICIAL -->
+<div id="formador-inicial" class="panel">
+  <div class="ptitle">Formación inicial — Wave Piloto 04</div>
+  <div class="psub">Grupo 12 · 18 agentes · Día 4/10 · Horario: 8:00 AM (ventana asistencia: 07:58)</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Tablero de asistencia · 16 mar</div><button class="btn sm">Ver historial completo</button></div>
+      <table><thead><tr><th>Agente</th><th>Entrada</th><th>Estado</th><th>Acción</th></tr></thead>
+      <tbody>
+        <tr><td><div class="an">Carlos Mendoza</div><div class="ai">#AG-0041</div></td><td class="mono" style="color:var(--grn);font-weight:600">07:58 AM</td><td><span class="b gn">A tiempo</span></td><td>—</td></tr>
+        <tr><td><div class="an">Ana Torres</div><div class="ai">#AG-0042</div></td><td class="mono" style="color:var(--amb);font-weight:600">08:14 AM</td><td><span class="b am">Tarde</span></td><td><button class="btn sm">Documentar motivo</button></td></tr>
+        <tr><td><div class="an">Jhon Ramírez</div><div class="ai">#AG-0043</div></td><td class="mono" style="color:var(--tx3)">—</td><td><span class="b rd">Ausente</span></td><td><button class="btn sm dan">Documentar retiro</button></td></tr>
+        <tr><td><div class="an">María López</div><div class="ai">#AG-0044</div></td><td class="mono" style="color:var(--grn);font-weight:600">07:59 AM</td><td><span class="b gn">A tiempo</span></td><td>—</td></tr>
+        <tr><td><div class="an">Sofía Vargas</div><div class="ai">#AG-0045</div></td><td class="mono" style="color:var(--grn);font-weight:600">08:01 AM</td><td><span class="b gn">A tiempo</span></td><td>—</td></tr>
+      </tbody></table>
+      <div style="font-size:11px;color:var(--tx3);margin-top:9px;padding-top:8px;border-top:1px solid var(--br)">El agente registra su asistencia directamente. Máx. 2 min antes del horario parametrizado.</div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Módulos y resultados</div><button class="btn sm pri">+ Módulo</button></div>
+      <div class="eg">
+        <div class="ec"><div class="en">M1 · Producto</div><div class="esw"><span class="escore" style="color:var(--grn)">91%</span><span class="b gn">OK</span></div><div style="font-size:10px;color:var(--tx3)">16/18 aprobaron</div></div>
+        <div class="ec"><div class="en">M2 · Sistema</div><div class="esw"><span class="escore" style="color:var(--grn)">85%</span><span class="b gn">OK</span></div><div style="font-size:10px;color:var(--tx3)">14/18</div></div>
+        <div class="ec"><div class="en">M3 · Calidad</div><div class="esw"><span class="escore" style="color:var(--grn)">88%</span><span class="b gn">OK</span></div><div style="font-size:10px;color:var(--grn)">Role play ✓</div></div>
+        <div class="ec" style="background:var(--rl);border-color:rgba(192,39,45,0.18)"><div class="en">M4 · Objeciones</div><div class="esw"><span class="escore" style="color:var(--red)">62%</span><span class="b rd">Recup.</span></div><div style="font-size:10px;color:var(--red)">2 en recup. 1</div></div>
+        <div class="ec"><div class="en">M5 · Proceso</div><div class="esw"><span class="escore" style="color:var(--tx3)">—</span><span class="b gy">Pend.</span></div><div style="font-size:10px;color:var(--tx3)">18 mar</div></div>
+        <div class="ec" style="cursor:pointer;border:1px dashed rgba(13,122,95,0.35);background:var(--tl)"><div class="en" style="color:var(--teal)">+ Role play M4</div><div style="font-size:10px;color:var(--teal)">Cargar grilla</div></div>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:4px">
+        <button class="btn sm" style="flex:1">Retroalimentación grupal</button>
+        <button class="btn sm" style="flex:1">Retroalimentación individual</button>
+      </div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Gestión de recuperaciones</div></div>
+      <div class="al wa"><div>Carlos Mendoza — retroalimentación M4 vence hoy (SLA 24h).</div></div>
+      <table><thead><tr><th>Agente</th><th>Módulo</th><th>Intento</th><th>Nota</th><th>Retro.</th></tr></thead>
+      <tbody>
+        <tr><td>Carlos Mendoza</td><td>M4</td><td><span class="b am">2do</span></td><td class="mono">62%</td><td><span class="b rd">Pendiente</span></td></tr>
+        <tr><td>Jhon Ramírez</td><td>M3</td><td><span class="b am">2do</span></td><td class="mono">78%</td><td><span class="b gn">Completada</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Confirmar aprobados para OJT</div></div>
+      <div style="font-size:12px;color:var(--tx2);margin-bottom:12px">Solo disponible al completar todos los módulos. Estado actual: 3/5 módulos.</div>
+      <div class="pw"><div class="ph"><span>Avance de módulos</span><span style="font-weight:600">3/5</span></div><div class="pt"><div class="pf" style="width:60%;background:var(--teal)"></div></div></div>
+      <button class="btn" style="width:100%;opacity:.4;cursor:not-allowed">Confirmar aprobados y pasar a OJT</button>
+      <div style="font-size:11px;color:var(--tx3);margin-top:6px">Disponible cuando todos los módulos tengan resultado registrado.</div>
+    </div>
+  </div>
+</div>
+
+<!-- OJT -->
+<div id="formador-ojt" class="panel">
+  <div class="ptitle">OJT — Wave Piloto 04</div>
+  <div class="psub">Día 3 de 6 · 15 agentes activos</div>
+  <div class="al da"><div><strong>Alerta:</strong> Carlos Mendoza — 2 días bajo meta AHT. Acompañamiento urgente requerido.</div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Tablero indicadores diarios</div><div style="display:flex;gap:7px"><button class="btn sm">Importar Excel KPIs</button><button class="btn sm pri">Exportar acta PDF</button></div></div>
+      <table><thead><tr><th>Agente</th><th>AHT</th><th>Calidad</th><th>CSAT</th><th>Estado</th><th>Supervisor</th><th>Acción</th></tr></thead>
+      <tbody>
+        <tr><td><div class="an">Carlos Mendoza</div></td><td class="s2c"><span class="dot dr"></span><span class="mono">5:42</span></td><td class="s2c"><span class="dot dg"></span>87%</td><td class="s2c"><span class="dot dg"></span>4.4</td><td><span class="b rd">Riesgo AHT</span></td><td>Diego Ruiz</td><td><button class="btn sm dan">+ Urgente</button></td></tr>
+        <tr><td><div class="an">Ana Torres</div></td><td class="s2c"><span class="dot dg"></span><span class="mono">4:12</span></td><td class="s2c"><span class="dot dg"></span>91%</td><td class="s2c"><span class="dot dg"></span>4.6</td><td><span class="b gn">En meta</span></td><td>Diego Ruiz</td><td><button class="btn sm">+ Retro.</button></td></tr>
+        <tr><td><div class="an">María López</div></td><td class="s2c"><span class="dot dg"></span><span class="mono">4:30</span></td><td class="s2c"><span class="dot dg"></span>88%</td><td class="s2c"><span class="dot dg"></span>4.4</td><td><span class="b gn">En meta</span></td><td>Sandra Gil</td><td><button class="btn sm">+ Retro.</button></td></tr>
+        <tr><td><div class="an">Sofía Vargas</div></td><td class="s2c"><span class="dot da"></span><span class="mono">5:10</span></td><td class="s2c"><span class="dot dg"></span>86%</td><td class="s2c"><span class="dot dg"></span>4.2</td><td><span class="b am">Seguimiento</span></td><td>Héctor Cano</td><td><button class="btn sm">+ Retro.</button></td></tr>
+        <tr><td><div class="an">Jorge Patiño</div></td><td class="s2c"><span class="dot dg"></span><span class="mono">4:05</span></td><td class="s2c"><span class="dot dg"></span>93%</td><td class="s2c"><span class="dot dg"></span>4.7</td><td><span class="b gn">En meta</span></td><td>Sandra Gil</td><td>—</td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Retroalimentación individual · Carlos Mendoza</div><span class="b rd">Urgente</span></div>
+      <div class="fg"><div class="fl">Tipo de acompañamiento</div><select class="fs"><option>Coaching de desempeño individual</option><option>Retroalimentación grupal</option><option>Acompañamiento en piso</option></select></div>
+      <div class="fg"><div class="fl">Observaciones</div><textarea class="fta" rows="3">AHT por encima de meta 2 días consecutivos. Se identifica demora excesiva en consulta al sistema CRM durante la llamada.</textarea></div>
+      <div class="fg"><div class="fl">Plan de acción sugerido</div><textarea class="fta" rows="2" placeholder="Plan de acción para el agente...">Practicar navegación CRM en las próximas 2 horas de productividad.</textarea></div>
+      <button class="btn pri" style="width:100%;margin-top:3px">Guardar retroalimentación · genera compromiso en agente</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORMACIÓN CONTINUA -->
+<div id="formador-continua" class="panel">
+  <div class="ptitle">Formación continua — Planificador Marzo 2026</div>
+  <div class="psub">Campaña Piloto · 3 actividades programadas</div>
+  <div class="card">
+    <div class="ch"><div class="ct">MAN-02 · Tipificación correcta · En ejecución</div><div style="display:flex;gap:7px"><span class="b bl">Activo</span><button class="btn sm pri">Cargar KPI final hoy</button></div></div>
+    <div class="fr3">
+      <div class="fg"><div class="fl">KPI seleccionado</div><input class="fi" value="Tipificación correcta" readonly></div>
+      <div class="fg"><div class="fl">KPI inicial (promedio grupo)</div><input class="fi" value="68%" readonly></div>
+      <div class="fg"><div class="fl">KPI final — día 8 (hoy)</div><input class="fi" placeholder="Importar Excel o digitar..."></div>
+    </div>
+    <div class="g2" style="margin-bottom:0">
+      <div>
+        <div class="pw"><div class="ph"><span>Asistencia</span><span style="font-weight:600">38/45 (84%)</span></div><div class="pt"><div class="pf" style="width:84%;background:var(--teal)"></div></div></div>
+        <div class="pw"><div class="ph"><span>PostQuiz K2</span><span style="font-weight:600">80% promedio</span></div><div class="pt"><div class="pf" style="width:80%;background:var(--blue)"></div></div></div>
+        <div class="pw"><div class="ph"><span>Aplicabilidad K3</span><span style="font-weight:600;color:var(--amb)">Pendiente Calidad</span></div><div class="pt"><div class="pf" style="width:5%;background:var(--amb)"></div></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px;justify-content:center">
+        <button class="btn sm">Importar KPIs desde Excel</button>
+        <button class="btn sm">Retroalimentación grupal</button>
+        <button class="btn sm">Ver compromisos de agentes</button>
+      </div>
+    </div>
+  </div>
+  <div class="card card-last">
+    <div class="ch"><div class="ct">Planificador mensual completo</div><button class="btn sm pri">Enviar a aprobación del líder</button></div>
+    <table><thead><tr><th>#</th><th>Actividad</th><th>KPI</th><th>Fecha</th><th>Asistencia</th><th>K2</th><th>K3</th><th>K4</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>MAN-01</td><td>Manejo objeciones</td><td>FCR</td><td>10 mar</td><td class="s2c"><span class="dot dg"></span>96%</td><td class="s2c"><span class="dot dg"></span>87%</td><td><span class="b am">Solicitado</span></td><td>—</td><td><span class="b am">K3 pend.</span></td></tr>
+      <tr><td>MAN-02</td><td>Tipificación correcta</td><td>Calidad</td><td>14 mar</td><td class="s2c"><span class="dot dg"></span>84%</td><td class="s2c"><span class="dot dg"></span>80%</td><td><span class="b rd">No inic.</span></td><td>—</td><td><span class="b bl">KPI día 8</span></td></tr>
+      <tr><td>MAN-03</td><td>Calidad en gestión</td><td>Calidad</td><td>20 mar</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="b gy">Prog.</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<!-- PRETURNOS -->
+<div id="formador-preturnos" class="panel">
+  <div class="ptitle">Preturnos</div>
+  <div class="psub">Campaña Piloto · Actividades cortas de refuerzo y recordación</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Registrar nuevo preturno</div><span class="b tl">Mín. 3 preguntas</span></div>
+      <div class="fr2">
+        <div class="fg"><div class="fl">Fecha</div><input type="date" class="fi" value="2026-03-16"></div>
+        <div class="fg"><div class="fl">Supervisor del grupo</div><select class="fs"><option>Diego Ruiz</option><option>Sandra Gil</option><option>Héctor Cano</option></select></div>
+      </div>
+      <div class="fg"><div class="fl">Tema trabajado</div><input class="fi" value="Tipificación — repaso de árbol de decisión"></div>
+      <div class="fg"><div class="fl">Evaluación (mín. 3 preguntas — banco de preguntas)</div><textarea class="fta" rows="3" placeholder="Las preguntas se cargan desde el banco del módulo seleccionado..."></textarea></div>
+      <button class="btn pri" style="width:100%">Guardar preturno · informe automático</button>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Historial de preturnos</div></div>
+      <table><thead><tr><th>Fecha</th><th>Tema</th><th>Agentes</th><th>Promedio</th></tr></thead>
+      <tbody>
+        <tr><td>16 mar</td><td>Tipificación — repaso</td><td>42</td><td class="s2c"><span class="dot dg"></span><span class="mono">87%</span></td></tr>
+        <tr><td>15 mar</td><td>Protocolo de bienvenida</td><td>40</td><td class="s2c"><span class="dot dg"></span><span class="mono">92%</span></td></tr>
+        <tr><td>14 mar</td><td>Objeciones de precio</td><td>38</td><td class="s2c"><span class="dot da"></span><span class="mono">74%</span></td></tr>
+        <tr><td>13 mar</td><td>Escalamiento correcto</td><td>45</td><td class="s2c"><span class="dot dg"></span><span class="mono">88%</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- EVALUACIONES -->
+<div id="formador-evaluaciones" class="panel">
+  <div class="ptitle">Mis evaluaciones y encuestas</div>
+  <div class="psub">Gestión de instrumentos por módulo y actividad</div>
+  <div class="al in"><div>Puedes <strong>editar evaluaciones antes de que tengan resultados</strong>. Con resultados: requiere aprobación del Jefe F&C.</div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Evaluaciones activas — Formación inicial</div><button class="btn sm pri">+ Nueva evaluación</button></div>
+      <table><thead><tr><th>Módulo</th><th>Preguntas</th><th>Umbral</th><th>Resultados</th><th>Acción</th></tr></thead>
+      <tbody>
+        <tr><td>M1 · Producto</td><td>10</td><td>80%</td><td><span class="b gn">18 respuestas</span></td><td><span class="b gy">Solo ver</span></td></tr>
+        <tr><td>M2 · Sistema</td><td>8</td><td>80%</td><td><span class="b gn">16 respuestas</span></td><td><span class="b gy">Solo ver</span></td></tr>
+        <tr><td>M3 · Calidad</td><td>10</td><td>85%</td><td><span class="b gn">18 respuestas</span></td><td><span class="b gy">Solo ver</span></td></tr>
+        <tr><td>M4 · Objeciones</td><td>10</td><td>85%</td><td><span class="b am">16 resp. (2 en recup.)</span></td><td><span class="b gy">Solo ver</span></td></tr>
+        <tr><td>M5 · Proceso</td><td>8</td><td>80%</td><td><span class="b gy">Sin resultados aún</span></td><td><button class="btn sm">Editar</button></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Encuestas de satisfacción activas</div><button class="btn sm pri">+ Nueva encuesta</button></div>
+      <table><thead><tr><th>Vinculada a</th><th>Día/Momento</th><th>Respuestas</th><th>Promedio K1</th></tr></thead>
+      <tbody>
+        <tr><td>Wave Piloto 04</td><td>Día 3</td><td>16/18</td><td class="mono" style="color:var(--grn)">4.6/5</td></tr>
+        <tr><td>MAN-01 Objeciones</td><td>Post-formación</td><td>36/38</td><td class="mono" style="color:var(--grn)">4.5/5</td></tr>
+        <tr><td>MAN-02 Tipificación</td><td>Post-formación</td><td>38/38</td><td class="mono" style="color:var(--grn)">4.6/5</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- AGENDA -->
+<div id="formador-agenda" class="panel">
+  <div class="ptitle">Mi agenda de capacitaciones</div>
+  <div class="psub">Vista semanal — Semana 16-20 mar 2026</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Esta semana</div><button class="btn sm">+ Nueva actividad</button></div>
+    <div class="agi">
+      <div class="agt"><div class="agd">16</div><div class="agday">Mar Hoy</div></div>
+      <div class="agb">
+        <div class="agtit">Wave Piloto 04 · Formación inicial · M4 Objeciones</div>
+        <div class="agmet">8:00 AM – 5:00 PM · Sala 3 · 18 agentes · KPI final MAN-02 vence hoy</div>
+        <div style="margin-top:4px"><span class="b tl">En curso</span> <span class="b rd">KPI pendiente</span></div>
+      </div>
+    </div>
+    <div class="agi">
+      <div class="agt"><div class="agd">17</div><div class="agday">Mar</div></div>
+      <div class="agb">
+        <div class="agtit">Wave Piloto 04 · Formación inicial · M5 Proceso</div>
+        <div class="agmet">8:00 AM – 12:00 PM · Sala 3 · Evaluación final del pensum</div>
+        <div style="margin-top:4px"><span class="b bl">Programada</span></div>
+      </div>
+    </div>
+    <div class="agi">
+      <div class="agt"><div class="agd">18</div><div class="agday">Mar</div></div>
+      <div class="agb">
+        <div class="agtit">Pre-test OJT Wave Piloto 04 · Inicio OJT</div>
+        <div class="agmet">Toda la jornada · Configuración de tablero OJT · 15 agentes aprobados</div>
+        <div style="margin-top:4px"><span class="b bl">Programada</span></div>
+      </div>
+    </div>
+    <div class="agi">
+      <div class="agt"><div class="agd">20</div><div class="agday">Mar</div></div>
+      <div class="agb">
+        <div class="agtit">MAN-03 · Calidad en gestión · Formación continua</div>
+        <div class="agmet">9:00 AM – 11:00 AM · Virtual · 45 agentes · KPI: Calidad 72% → 85%</div>
+        <div style="margin-top:4px"><span class="b bl">Programada</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BIBLIOTECA -->
+<div id="formador-biblioteca" class="panel">
+  <div class="ptitle">Biblioteca de actividades</div>
+  <div class="psub">Dinámicas, talleres y evaluaciones reutilizables · Reduce 40-50% el tiempo de diseño</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <input class="fi" style="flex:1" placeholder="Buscar por tema, dominio o tipología...">
+    <select class="fs" style="width:160px"><option>Todos los dominios</option><option>Conocimiento</option><option>Habilidad</option><option>Actitud</option></select>
+    <select class="fs" style="width:160px"><option>Toda modalidad</option><option>Presencial</option><option>Virtual</option><option>Mixta</option></select>
+  </div>
+  <div class="g3">
+    <div class="card card-last" style="cursor:pointer">
+      <div style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Habilidad · Objeciones</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Role play: manejo de objeción "déjame pensarlo"</div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">⏱ 25 min · Usado 12 veces · ★ 4.7</div>
+      <div style="display:flex;gap:5px"><span class="b tl">Presencial</span><span class="b pu">Adaptable</span></div>
+    </div>
+    <div class="card card-last" style="cursor:pointer">
+      <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Conocimiento · Tipificación</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Taller: árbol de decisión de tipologías</div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">⏱ 30 min · Usado 8 veces · ★ 4.5</div>
+      <div style="display:flex;gap:5px"><span class="b bl">Virtual</span><span class="b pu">Adaptable</span></div>
+    </div>
+    <div class="card card-last" style="cursor:pointer">
+      <div style="font-size:10px;font-weight:700;color:var(--amb);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Actitud · Servicio</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Dinámica: empatía activa en quejas</div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">⏱ 20 min · Usado 15 veces · ★ 4.9</div>
+      <div style="display:flex;gap:5px"><span class="b tl">Presencial</span><span class="b am">Mixta</span></div>
+    </div>
+    <div class="card card-last" style="cursor:pointer">
+      <div style="font-size:10px;font-weight:700;color:var(--pur);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Evaluación · Calidad</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Banco 20 preguntas: proceso y calidad básico</div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">⏱ 15 min · Usado 22 veces · ★ 4.6</div>
+      <div style="display:flex;gap:5px"><span class="b pu">PostQuiz</span></div>
+    </div>
+    <div class="card card-last" style="cursor:pointer">
+      <div style="font-size:10px;font-weight:700;color:var(--grn);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Habilidad · Cierre</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Simulación: escalera de cierre en 3 pasos</div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">⏱ 35 min · Usado 6 veces · ★ 4.4</div>
+      <div style="display:flex;gap:5px"><span class="b tl">Presencial</span></div>
+    </div>
+    <div class="card card-last" style="cursor:pointer;border:1px dashed var(--br2);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px">
+      <div style="font-size:22px;color:var(--tx3)">+</div>
+      <div style="font-size:12px;color:var(--tx3)">Contribuir nueva actividad</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABLERO -->
+<div id="formador-tablero" class="panel">
+  <div class="ptitle">Tablero de mis grupos</div>
+  <div class="psub">Resumen de desempeño de todos mis grupos activos</div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Agentes en formación</div><div class="sc-val" style="color:var(--teal)">18</div><div class="sc-sub">Wave Piloto 04</div></div>
+    <div class="sc"><div class="sc-lbl">Agentes en OJT</div><div class="sc-val" style="color:var(--blue)">15</div><div class="sc-sub">Wave Piloto 03</div></div>
+    <div class="sc"><div class="sc-lbl">Agentes en formación continua</div><div class="sc-val" style="color:var(--grn)">83</div><div class="sc-sub">3 actividades activas</div></div>
+    <div class="sc"><div class="sc-lbl">Alertas activas</div><div class="sc-val" style="color:var(--red)">3</div><div class="sc-sub">Requieren acción hoy</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Wave Piloto 04 — Formación inicial</div><span class="b tl">Día 4/10</span></div>
+      <div class="pw"><div class="ph"><span>Aprobación promedio</span><span style="font-weight:600">83%</span></div><div class="pt"><div class="pf" style="width:83%;background:var(--grn)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Asistencia acumulada</span><span style="font-weight:600">96%</span></div><div class="pt"><div class="pf" style="width:96%;background:var(--teal)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Módulos completados</span><span style="font-weight:600">3/5</span></div><div class="pt"><div class="pf" style="width:60%;background:var(--blue)"></div></div></div>
+      <div style="font-size:11px;color:var(--red);margin-top:4px">⚠ 1 retiro pendiente · 2 en recuperación M4</div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Wave Piloto 03 — OJT</div><span class="b bl">Día 3/6</span></div>
+      <div class="pw"><div class="ph"><span>Agentes en meta</span><span style="font-weight:600">11/15 (73%)</span></div><div class="pt"><div class="pf" style="width:73%;background:var(--teal)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Calidad promedio</span><span style="font-weight:600">88%</span></div><div class="pt"><div class="pf" style="width:88%;background:var(--grn)"></div></div></div>
+      <div class="pw"><div class="ph"><span>AHT promedio</span><span style="font-weight:600">4:45</span></div><div class="pt"><div class="pf" style="width:71%;background:var(--amb)"></div></div></div>
+      <div style="font-size:11px;color:var(--red);margin-top:4px">⚠ 2 agentes bajo meta AHT 2+ días</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+<div class="role-view" id="view-analista">
+
+<div id="analista-inicio" class="panel on">
+  <div class="ptitle">Panel de calidad</div>
+  <div class="psub">Sandra Ríos · Analista de Calidad · Campaña Piloto</div>
+  <div class="al da"><div><strong>K3 venciendo hoy:</strong> MAN-01 "Manejo de objeciones" — SLA 17:00. Carga ahora.</div></div>
+  <div class="sr3">
+    <div class="sc"><div class="sc-lbl">Monitoreos OJT pend.</div><div class="sc-val" style="color:var(--amb)">4</div><div class="sc-sub">Wave Piloto 04</div></div>
+    <div class="sc"><div class="sc-lbl">K3 por cargar</div><div class="sc-val" style="color:var(--red)">1</div><div class="sc-sub">MAN-01 · vence hoy</div></div>
+    <div class="sc"><div class="sc-lbl">Monitoreos realizados</div><div class="sc-val" style="color:var(--grn)">28</div><div class="sc-sub">Semana en curso</div></div>
+  </div>
+</div>
+
+<div id="analista-ojt" class="panel">
+  <div class="ptitle">OJT — Monitoreos de calidad</div>
+  <div class="psub">Wave Piloto 04 · Asignada por Líder F&C · 15 agentes</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Tablero del grupo (solo lectura)</div></div>
+      <table><thead><tr><th>Agente</th><th>AHT</th><th>Calidad</th><th>Monitoreos</th><th>Acción</th></tr></thead>
+      <tbody>
+        <tr><td><div class="an">Carlos Mendoza</div></td><td class="s2c"><span class="dot dr"></span>5:42</td><td class="s2c"><span class="dot dg"></span>87%</td><td><span class="b gn">2 realizados</span></td><td><button class="btn sm">+ Monitoreo</button></td></tr>
+        <tr><td><div class="an">Ana Torres</div></td><td class="s2c"><span class="dot dg"></span>4:12</td><td class="s2c"><span class="dot dg"></span>91%</td><td><span class="b gn">2 realizados</span></td><td><button class="btn sm">+ Monitoreo</button></td></tr>
+        <tr><td><div class="an">María López</div></td><td class="s2c"><span class="dot dg"></span>4:30</td><td class="s2c"><span class="dot dg"></span>88%</td><td><span class="b am">1 pendiente</span></td><td><button class="btn sm pri">+ Monitoreo</button></td></tr>
+        <tr><td><div class="an">Sofía Vargas</div></td><td class="s2c"><span class="dot da"></span>5:10</td><td class="s2c"><span class="dot dg"></span>86%</td><td><span class="b gn">2 realizados</span></td><td><button class="btn sm">+ Monitoreo</button></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Cargar monitoreo de calidad</div><span class="b am">Protocolo OJT</span></div>
+      <div class="fr2">
+        <div class="fg"><div class="fl">Agente</div><select class="fs"><option>María López</option><option>Carlos Mendoza</option><option>Ana Torres</option></select></div>
+        <div class="fg"><div class="fl">ID llamada / caso</div><input class="fi" placeholder="CALL-2024-XXXX"></div>
+      </div>
+      <div class="fr2">
+        <div class="fg"><div class="fl">Fecha de la llamada</div><input type="date" class="fi" value="2026-03-15"></div>
+        <div class="fg"><div class="fl">Fecha de evaluación</div><input type="date" class="fi" value="2026-03-16"></div>
+      </div>
+      <div class="fg"><div class="fl">Aspectos positivos</div><textarea class="fta" rows="2" placeholder="Aspectos positivos observados en la llamada..."></textarea></div>
+      <div class="fg"><div class="fl">Aspectos a mejorar</div><textarea class="fta" rows="2" placeholder="Aspectos negativos o por mejorar..."></textarea></div>
+      <div class="fg"><div class="fl">Recomendación</div><textarea class="fta" rows="2" placeholder="Recomendación específica para el agente..."></textarea></div>
+      <button class="btn pri" style="width:100%;margin-top:3px">Guardar monitoreo · notificar agente</button>
+    </div>
+  </div>
+</div>
+
+<div id="analista-k3" class="panel">
+  <div class="ptitle">Aplicabilidad K3 — Formación continua</div>
+  <div class="psub">Campaña Piloto · Solicitudes activas</div>
+  <div class="al da"><div><strong>SLA venciendo hoy:</strong> MAN-01 — carga antes de las 17:00.</div></div>
+  <div class="card">
+    <div class="ch"><div class="ct">MAN-01 · Manejo de objeciones · K3</div><span class="b rd">Vence hoy</span></div>
+    <div style="background:var(--s2);border:1px solid var(--br);border-radius:8px;padding:11px;margin-bottom:13px;font-size:12px">
+      <div style="margin-bottom:2px"><strong>Brecha:</strong> FCR 71% vs meta 85%. Formación: 10 mar. Público: 38 agentes.</div>
+      <div style="color:var(--tx3)">Monitoreo dirigido: tipología de objeciones · semana post-formación.</div>
+    </div>
+    <div class="stitle">Resultados por momento observado</div>
+    <table style="margin-bottom:13px"><thead><tr><th>Momento</th><th>% Aplicabilidad</th><th>Observación</th></tr></thead>
+    <tbody>
+      <tr><td>Apertura de llamada</td><td><input class="fi" style="width:80px;padding:4px 8px" value="82%"></td><td><input class="fi" style="width:100%" value="Buen manejo del guión de apertura"></td></tr>
+      <tr><td>Identificación de objeción</td><td><input class="fi" style="width:80px;padding:4px 8px" value="71%"></td><td><input class="fi" style="width:100%" value="Demora en identificar el tipo de objeción"></td></tr>
+      <tr><td>Manejo y resolución</td><td><input class="fi" style="width:80px;padding:4px 8px" value="65%"></td><td><input class="fi" style="width:100%" value="Dificultad en rebate de objeción de precio"></td></tr>
+      <tr><td>Cierre de gestión</td><td><input class="fi" style="width:80px;padding:4px 8px" value="78%"></td><td><input class="fi" style="width:100%" value="Cierre correcto en la mayoría de casos"></td></tr>
+    </tbody></table>
+    <div class="fg"><div class="fl">Conclusión general</div><textarea class="fta" rows="2">Se observa mejora en apertura y cierre. La brecha principal persiste en identificación y manejo de la objeción de precio. Se recomienda refuerzo focalizado en este momento.</textarea></div>
+    <button class="btn pri" style="margin-top:3px">Guardar K3 · planificador se actualiza automáticamente</button>
+  </div>
+</div>
+
+<div id="analista-formaciones" class="panel">
+  <div class="ptitle">Formaciones continuas — Vista analista</div>
+  <div class="psub">Programación y detalle del MAN · Solo lectura</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Actividades del mes</div></div>
+    <table><thead><tr><th>MAN</th><th>Actividad</th><th>Fecha</th><th>Público</th><th>Mi rol</th><th>Estado K3</th></tr></thead>
+    <tbody>
+      <tr><td>MAN-01</td><td>Manejo de objeciones</td><td>10 mar</td><td>38 agentes</td><td><span class="b am">K3 solicitado</span></td><td><span class="b rd">Vence hoy</span></td></tr>
+      <tr><td>MAN-02</td><td>Tipificación correcta</td><td>14 mar</td><td>45 agentes</td><td><span class="b gy">Pendiente solicitud</span></td><td><span class="b gy">No iniciado</span></td></tr>
+      <tr><td>MAN-03</td><td>Calidad en gestión</td><td>20 mar</td><td>42 agentes</td><td><span class="b gy">No aplica aún</span></td><td><span class="b gy">Programado</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="analista-tablero" class="panel">
+  <div class="ptitle">Tablero de resultados</div>
+  <div class="psub">Visión consolidada de mis grupos y actividades asignadas</div>
+  <div class="sr3">
+    <div class="sc"><div class="sc-lbl">Promedio calidad OJT</div><div class="sc-val" style="color:var(--grn)">88%</div><div class="sc-sub">Wave Piloto 04</div></div>
+    <div class="sc"><div class="sc-lbl">K3 promedio mes</div><div class="sc-val" style="color:var(--teal)">74%</div><div class="sc-sub">Aplicabilidad general</div></div>
+    <div class="sc"><div class="sc-lbl">Monitoreos semana</div><div class="sc-val" style="color:var(--blue)">28</div><div class="sc-sub">De 32 programados</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Aplicabilidad K3 por actividad</div></div>
+    <table><thead><tr><th>Formación</th><th>Momento 1</th><th>Momento 2</th><th>Momento 3</th><th>Momento 4</th><th>Promedio K3</th></tr></thead>
+    <tbody>
+      <tr><td>MAN-01 · Objeciones</td><td>82%</td><td>71%</td><td>65%</td><td>78%</td><td class="s2c"><span class="dot da"></span><span class="mono" style="font-weight:600">74%</span></td></tr>
+      <tr><td>MAN-02 · Tipificación</td><td colspan="4" style="color:var(--tx3)">Pendiente de carga</td><td><span class="b gy">—</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="analista-actividades" class="panel">
+  <div class="ptitle">Mis actividades</div>
+  <div class="psub">Registro de monitoreos y K3 realizados este mes</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Monitoreos OJT realizados</div></div>
+    <table><thead><tr><th>Fecha eval.</th><th>Agente</th><th>ID Llamada</th><th>Fecha llamada</th><th>Nota calidad</th></tr></thead>
+    <tbody>
+      <tr><td>16 mar</td><td>Carlos Mendoza</td><td class="mono">CALL-20240316-4521</td><td>15 mar</td><td class="s2c"><span class="dot dg"></span>87%</td></tr>
+      <tr><td>16 mar</td><td>Ana Torres</td><td class="mono">CALL-20240316-4522</td><td>15 mar</td><td class="s2c"><span class="dot dg"></span>92%</td></tr>
+      <tr><td>15 mar</td><td>Carlos Mendoza</td><td class="mono">CALL-20240315-3901</td><td>14 mar</td><td class="s2c"><span class="dot dg"></span>85%</td></tr>
+      <tr><td>15 mar</td><td>Sofía Vargas</td><td class="mono">CALL-20240315-3902</td><td>14 mar</td><td class="s2c"><span class="dot da"></span>74%</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+</div>
+
+
+<div class="role-view" id="view-supervisor">
+
+<div id="supervisor-inicio" class="panel on">
+  <div class="ptitle">Panel del supervisor</div>
+  <div class="psub">Diego Ruiz · Supervisor · Campaña Piloto</div>
+  <div class="al da"><div><strong>Acción requerida:</strong> Carlos Mendoza — AHT bajo meta 2 días. Registra acompañamiento hoy.</div></div>
+  <div class="sr3">
+    <div class="sc"><div class="sc-lbl">Agentes en mi OJT</div><div class="sc-val" style="color:var(--teal)">6</div><div class="sc-sub">Wave Piloto 04</div></div>
+    <div class="sc"><div class="sc-lbl">En riesgo</div><div class="sc-val" style="color:var(--red)">1</div><div class="sc-sub">Carlos Mendoza</div></div>
+    <div class="sc"><div class="sc-lbl">Retroalim. registradas</div><div class="sc-val" style="color:var(--grn)">5</div><div class="sc-sub">Esta semana</div></div>
+  </div>
+</div>
+
+<div id="supervisor-ojt" class="panel">
+  <div class="ptitle">Mi equipo OJT</div>
+  <div class="psub">Wave Piloto 04 · Asignado por Líder F&C</div>
+  <div class="al da"><div><strong>Carlos Mendoza:</strong> AHT 5:42 — bajo meta 2 días consecutivos. Coaching urgente.</div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Tablero de mi equipo</div></div>
+      <table><thead><tr><th>Agente</th><th>AHT</th><th>Calidad</th><th>CSAT</th><th>Estado</th><th>Acción</th></tr></thead>
+      <tbody>
+        <tr><td><div class="an">Carlos Mendoza</div></td><td class="s2c"><span class="dot dr"></span>5:42</td><td class="s2c"><span class="dot dg"></span>87%</td><td class="s2c"><span class="dot dg"></span>4.4</td><td><span class="b rd">Riesgo</span></td><td><button class="btn sm pri">Retroalimentar</button></td></tr>
+        <tr><td><div class="an">Ana Torres</div></td><td class="s2c"><span class="dot dg"></span>4:12</td><td class="s2c"><span class="dot dg"></span>91%</td><td class="s2c"><span class="dot dg"></span>4.6</td><td><span class="b gn">En meta</span></td><td><button class="btn sm">Ver</button></td></tr>
+        <tr><td><div class="an">Sofía Vargas</div></td><td class="s2c"><span class="dot da"></span>5:10</td><td class="s2c"><span class="dot dg"></span>86%</td><td class="s2c"><span class="dot dg"></span>4.2</td><td><span class="b am">Seguimiento</span></td><td><button class="btn sm">Retroalimentar</button></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Registrar retroalimentación</div><span class="b pu">Mi casilla exclusiva</span></div>
+      <div class="fg"><div class="fl">Agente</div><select class="fs"><option>Carlos Mendoza</option><option>Ana Torres</option><option>Sofía Vargas</option></select></div>
+      <div class="fg"><div class="fl">Tipo</div><select class="fs"><option>Retroalimentación individual</option><option>Acompañamiento en piso</option><option>Coaching de desempeño</option></select></div>
+      <div class="fg"><div class="fl">Observaciones</div><textarea class="fta" rows="3" placeholder="Describe el acompañamiento..."></textarea></div>
+      <button class="btn pri" style="width:100%;margin-top:3px">Guardar · genera compromiso en el agente</button>
+    </div>
+  </div>
+</div>
+
+<div id="supervisor-formaciones" class="panel">
+  <div class="ptitle">Formaciones programadas</div>
+  <div class="psub">Actividades de formación continua de mi equipo · Solo lectura</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Actividades del mes — mis agentes</div></div>
+    <table><thead><tr><th>MAN</th><th>Actividad</th><th>Fecha</th><th>Agentes míos</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>MAN-01</td><td>Manejo de objeciones</td><td>10 mar</td><td>6/6 asistieron</td><td><span class="b gn">Completada</span></td></tr>
+      <tr><td>MAN-02</td><td>Tipificación correcta</td><td>14 mar</td><td>5/6 asistieron</td><td><span class="b bl">En seguimiento</span></td></tr>
+      <tr><td>MAN-03</td><td>Calidad en gestión</td><td>20 mar</td><td>6/6 programados</td><td><span class="b gy">Próxima</span></td></tr>
+    </tbody></table>
+    <div style="margin-top:12px;font-size:12px;color:var(--tx2)">Si eres parte del público objetivo de MAN-03, presentarás la evaluación y encuesta como los agentes.</div>
+  </div>
+</div>
+
+<div id="supervisor-retros" class="panel">
+  <div class="ptitle">Mis retroalimentaciones</div>
+  <div class="psub">Historial de retroalimentaciones que has registrado</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Retroalimentaciones registradas</div><button class="btn sm pri">+ Nueva retroalimentación</button></div>
+    <table><thead><tr><th>Fecha</th><th>Agente</th><th>Tipo</th><th>Compromiso agente</th></tr></thead>
+    <tbody>
+      <tr><td>15 mar</td><td>Carlos Mendoza</td><td>Coaching desempeño</td><td><span class="b gn">Registrado</span></td></tr>
+      <tr><td>15 mar</td><td>Ana Torres</td><td>Retroalimentación individual</td><td><span class="b gn">Registrado</span></td></tr>
+      <tr><td>14 mar</td><td>Sofía Vargas</td><td>Acompañamiento en piso</td><td><span class="b gn">Registrado</span></td></tr>
+      <tr><td>13 mar</td><td>Carlos Mendoza</td><td>Coaching desempeño</td><td><span class="b gn">Registrado</span></td></tr>
+      <tr><td>12 mar</td><td>Ana Torres</td><td>Retroalimentación individual</td><td><span class="b gn">Registrado</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="supervisor-compromisos" class="panel">
+  <div class="ptitle">Compromisos de mis agentes</div>
+  <div class="psub">Compromisos registrados por los agentes frente a mis retroalimentaciones</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Estado de compromisos</div></div>
+    <table><thead><tr><th>Agente</th><th>Mi retroalimentación</th><th>Su compromiso</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>Carlos Mendoza</td><td>15 mar · Coaching AHT</td><td>"Practicaré atajos CRM"</td><td><span class="b gn">Registrado</span></td></tr>
+      <tr><td>Ana Torres</td><td>15 mar · Retro. individual</td><td>"Revisaré guión de cierre"</td><td><span class="b gn">Registrado</span></td></tr>
+      <tr><td>Sofía Vargas</td><td>14 mar · Acompañamiento</td><td>"Reduciré pausas en consulta"</td><td><span class="b gn">Registrado</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="supervisor-tablero" class="panel">
+  <div class="ptitle">Tablero de resultados</div>
+  <div class="psub">Resumen consolidado de mi equipo</div>
+  <div class="sr3">
+    <div class="sc"><div class="sc-lbl">Promedio AHT</div><div class="sc-val" style="color:var(--amb)">4:55</div><div class="sc-sub">Meta: ≤ 4:30</div><div class="sc-dn">↓ 1 agente en riesgo</div></div>
+    <div class="sc"><div class="sc-lbl">Calidad promedio</div><div class="sc-val" style="color:var(--grn)">88%</div><div class="sc-sub">Meta: ≥ 85%</div><div class="sc-up">↑ En meta</div></div>
+    <div class="sc"><div class="sc-lbl">CSAT promedio</div><div class="sc-val" style="color:var(--grn)">4.4</div><div class="sc-sub">Meta: ≥ 4.2</div><div class="sc-up">↑ En meta</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Evolución diaria del equipo</div></div>
+    <table><thead><tr><th>Agente</th><th>Día 1</th><th>Día 2</th><th>Día 3</th><th>Tendencia</th></tr></thead>
+    <tbody>
+      <tr><td>Carlos Mendoza</td><td class="s2c"><span class="dot dg"></span>4:15</td><td class="s2c"><span class="dot da"></span>5:10</td><td class="s2c"><span class="dot dr"></span>5:42</td><td><span class="b rd">↑ AHT riesgo</span></td></tr>
+      <tr><td>Ana Torres</td><td class="s2c"><span class="dot dg"></span>4:20</td><td class="s2c"><span class="dot dg"></span>4:10</td><td class="s2c"><span class="dot dg"></span>4:12</td><td><span class="b gn">↓ Mejorando</span></td></tr>
+      <tr><td>Sofía Vargas</td><td class="s2c"><span class="dot dg"></span>4:45</td><td class="s2c"><span class="dot da"></span>5:00</td><td class="s2c"><span class="dot da"></span>5:10</td><td><span class="b am">↑ Leve riesgo</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+</div>
+
+
+<div class="role-view" id="view-lider">
+
+<div id="lider-inicio" class="panel on">
+  <div class="ptitle">Panel del líder</div>
+  <div class="psub">Mónica Vega · Líder F&C · 4 cuentas asignadas</div>
+  <div class="al da"><div><strong>Retiro pendiente:</strong> Jhon Ramírez — Wave Piloto 04. Valida el protocolo.</div></div>
+  <div class="al wa"><div><strong>MAN por aprobar:</strong> MAN-03 "Calidad en gestión" — SLA vence en 3h.</div></div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Grupos activos</div><div class="sc-val" style="color:var(--teal)">5</div><div class="sc-sub">Mis cuentas</div></div>
+    <div class="sc"><div class="sc-lbl">Act. continua</div><div class="sc-val" style="color:var(--blue)">9</div><div class="sc-sub">Mes en curso</div></div>
+    <div class="sc"><div class="sc-lbl">Retiros pendientes</div><div class="sc-val" style="color:var(--red)">1</div><div class="sc-sub">Requiere validación</div></div>
+    <div class="sc"><div class="sc-lbl">MANs por aprobar</div><div class="sc-val" style="color:var(--amb)">1</div><div class="sc-sub">SLA vence hoy</div></div>
+  </div>
+</div>
+
+<div id="lider-grupos" class="panel">
+  <div class="ptitle">Grupos activos</div>
+  <div class="psub">Todos mis grupos en formación inicial y OJT</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Grupos activos</div><button class="btn sm pri">+ Crear grupo</button></div>
+    <table><thead><tr><th>Grupo</th><th>Cuenta</th><th>Formador</th><th>Agentes</th><th>Etapa</th><th>Estado</th><th>Acción</th></tr></thead>
+    <tbody>
+      <tr><td><div class="an">Wave Piloto 04</div></td><td>Piloto</td><td>Luis Mora</td><td>18</td><td><span class="b tl">Inicial Día 4</span></td><td class="s2c"><span class="dot da"></span>1 retiro pend.</td><td><button class="btn sm">Ver detalle</button></td></tr>
+      <tr><td><div class="an">Wave Piloto 03</div></td><td>Piloto</td><td>Luis Mora</td><td>15</td><td><span class="b bl">OJT Día 3</span></td><td class="s2c"><span class="dot dr"></span>2 bajo meta</td><td><button class="btn sm">Ver OJT</button></td></tr>
+      <tr><td><div class="an">Wave SAC-05</div></td><td>SAC Colombia</td><td>Andrea Pérez</td><td>22</td><td><span class="b tl">Inicial Día 7</span></td><td class="s2c"><span class="dot dg"></span>Sin alertas</td><td><button class="btn sm">Ver detalle</button></td></tr>
+      <tr><td><div class="an">Wave SAC-06</div></td><td>SAC Colombia</td><td>Jorge Salinas</td><td>20</td><td><span class="b gn">OJT Día 5</span></td><td class="s2c"><span class="dot dg"></span>18/20 en meta</td><td><button class="btn sm">Ver OJT</button></td></tr>
+    </tbody></table>
+  </div>
+  <div class="card card-last">
+    <div class="ch"><div class="ct">Crear nuevo grupo</div></div>
+    <div class="fr2">
+      <div class="fg"><div class="fl">Cuenta</div><select class="fs"><option>Campaña Piloto</option><option>SAC Colombia</option><option>Ventas Telco</option></select></div>
+      <div class="fg"><div class="fl">Nombre del grupo</div><input class="fi" placeholder="Ej: Wave Piloto 05"></div>
+    </div>
+    <div class="fr3">
+      <div class="fg"><div class="fl">Hora inicio (ventana asist.)</div><input type="time" class="fi" value="08:00"></div>
+      <div class="fg"><div class="fl">Días de formación</div><input class="fi" type="number" value="10"></div>
+      <div class="fg"><div class="fl">Fecha inicio</div><input type="date" class="fi" value="2026-03-20"></div>
+    </div>
+    <div class="fr2">
+      <div class="fg"><div class="fl">Formador asignado</div><select class="fs"><option>Luis Mora</option><option>Andrea Pérez</option><option>Jorge Salinas</option></select></div>
+      <div class="fg"><div class="fl">Analista calidad (OJT)</div><select class="fs"><option>Sandra Ríos</option><option>Camila Torres</option></select></div>
+    </div>
+    <button class="btn pri" style="margin-top:3px">Crear grupo · notificar formador y analista</button>
+  </div>
+</div>
+
+<div id="lider-inicial" class="panel">
+  <div class="ptitle">Formación inicial — Visión líder</div>
+  <div class="psub">Todos los grupos de formación inicial activos en mis cuentas</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Wave Piloto 04</div><span class="b tl">Día 4/10</span></div>
+      <div class="pw"><div class="ph"><span>Aprobación</span><span style="font-weight:600">83%</span></div><div class="pt"><div class="pf" style="width:83%;background:var(--grn)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Asistencia</span><span style="font-weight:600">96%</span></div><div class="pt"><div class="pf" style="width:96%;background:var(--teal)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Módulos completados</span><span style="font-weight:600">3/5 (60%)</span></div><div class="pt"><div class="pf" style="width:60%;background:var(--blue)"></div></div></div>
+      <div class="al da" style="margin-top:8px;margin-bottom:0"><div style="font-size:11px">1 retiro pendiente de validación · 2 en recuperación M4</div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Wave SAC-05</div><span class="b tl">Día 7/10</span></div>
+      <div class="pw"><div class="ph"><span>Aprobación</span><span style="font-weight:600">91%</span></div><div class="pt"><div class="pf" style="width:91%;background:var(--grn)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Asistencia</span><span style="font-weight:600">98%</span></div><div class="pt"><div class="pf" style="width:98%;background:var(--teal)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Módulos completados</span><span style="font-weight:600">4/5 (80%)</span></div><div class="pt"><div class="pf" style="width:80%;background:var(--blue)"></div></div></div>
+      <div class="al su" style="margin-top:8px;margin-bottom:0"><div style="font-size:11px">Sin alertas activas · En buen ritmo</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="lider-ojt" class="panel">
+  <div class="ptitle">OJT — Visión líder</div>
+  <div class="psub">Todos los grupos en OJT activos en mis cuentas</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Wave Piloto 03 — OJT</div><span class="b bl">Día 3/6</span></div>
+      <div class="pw"><div class="ph"><span>Agentes en meta</span><span style="font-weight:600">11/15</span></div><div class="pt"><div class="pf" style="width:73%;background:var(--teal)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Calidad promedio</span><span style="font-weight:600">88%</span></div><div class="pt"><div class="pf" style="width:88%;background:var(--grn)"></div></div></div>
+      <div class="al da" style="margin-bottom:0;margin-top:8px"><div style="font-size:11px">2 agentes bajo meta AHT 2+ días</div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Wave SAC-06 — OJT</div><span class="b gn">Día 5/6</span></div>
+      <div class="pw"><div class="ph"><span>Agentes en meta</span><span style="font-weight:600">18/20</span></div><div class="pt"><div class="pf" style="width:90%;background:var(--teal)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Calidad promedio</span><span style="font-weight:600">91%</span></div><div class="pt"><div class="pf" style="width:91%;background:var(--grn)"></div></div></div>
+      <div class="al su" style="margin-bottom:0;margin-top:8px"><div style="font-size:11px">Listo para acta final mañana</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="lider-continua" class="panel">
+  <div class="ptitle">Formación continua — Mis cuentas</div>
+  <div class="psub">Actividades del mes · Aprobación de MANs</div>
+  <div class="al wa"><div><strong>MAN-03 pendiente de aprobación</strong> — SLA 24h vence en 3h. Luis Mora lo envió esta mañana.</div></div>
+  <div class="card">
+    <div class="ch"><div class="ct">Actividades pendientes de aprobación</div></div>
+    <div style="background:var(--s2);border:1px solid var(--br2);border-radius:8px;padding:13px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div><div style="font-size:13px;font-weight:600">MAN-03 · Calidad en gestión</div><div style="font-size:11px;color:var(--tx3)">Luis Mora · Campaña Piloto · 42 agentes · 20 mar · Virtual</div></div>
+        <span class="b am">SLA: 3h</span>
+      </div>
+      <div style="font-size:12px;color:var(--tx2);margin-bottom:10px"><strong>Brecha:</strong> Calidad 72% vs meta 85%. <strong>Fuente:</strong> Pareto de errores. <strong>Acción:</strong> Refuerzo en proceso de verificación.</div>
+      <div style="display:flex;gap:7px">
+        <button class="btn pri sm">Aprobar actividad</button>
+        <button class="btn sm">Solicitar ajuste</button>
+        <button class="btn sm">Ver MAN completo</button>
+      </div>
+    </div>
+  </div>
+  <div class="card card-last">
+    <div class="ch"><div class="ct">Planificador mensual · Mis cuentas</div></div>
+    <table><thead><tr><th>#</th><th>Actividad</th><th>Cuenta</th><th>K2</th><th>K3</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>MAN-01</td><td>Manejo objeciones</td><td>Piloto</td><td class="s2c"><span class="dot dg"></span>87%</td><td><span class="b am">Solicitado</span></td><td><span class="b am">K3 pend.</span></td></tr>
+      <tr><td>MAN-02</td><td>Tipificación correcta</td><td>Piloto</td><td class="s2c"><span class="dot dg"></span>80%</td><td><span class="b rd">No inic.</span></td><td><span class="b bl">KPI día 8</span></td></tr>
+      <tr><td>MAN-03</td><td>Calidad en gestión</td><td>Piloto</td><td>—</td><td>—</td><td><span class="b am">Aprobación pend.</span></td></tr>
+      <tr><td>MAN-04</td><td>Protocolo de cierre</td><td>SAC Col.</td><td class="s2c"><span class="dot dg"></span>92%</td><td class="s2c"><span class="dot dg"></span>78%</td><td><span class="b gn">Completo</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="lider-preturnos" class="panel">
+  <div class="ptitle">Preturnos — Mis cuentas</div>
+  <div class="psub">Resumen de preturnos ejecutados por los formadores</div>
+  <div class="sr3">
+    <div class="sc"><div class="sc-lbl">Preturnos este mes</div><div class="sc-val" style="color:var(--teal)">34</div><div class="sc-sub">Mis cuentas</div></div>
+    <div class="sc"><div class="sc-lbl">Promedio de notas</div><div class="sc-val" style="color:var(--grn)">86%</div><div class="sc-sub">Todos los grupos</div></div>
+    <div class="sc"><div class="sc-lbl">Formadores activos</div><div class="sc-val" style="color:var(--blue)">3</div><div class="sc-sub">Han registrado preturnos</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Historial de preturnos · Mis cuentas</div></div>
+    <table><thead><tr><th>Fecha</th><th>Formador</th><th>Cuenta</th><th>Tema</th><th>Agentes</th><th>Promedio</th></tr></thead>
+    <tbody>
+      <tr><td>16 mar</td><td>Luis Mora</td><td>Piloto</td><td>Tipificación — repaso</td><td>42</td><td class="s2c"><span class="dot dg"></span>87%</td></tr>
+      <tr><td>15 mar</td><td>Luis Mora</td><td>Piloto</td><td>Protocolo bienvenida</td><td>40</td><td class="s2c"><span class="dot dg"></span>92%</td></tr>
+      <tr><td>15 mar</td><td>Andrea Pérez</td><td>SAC Col.</td><td>Objeciones de precio</td><td>55</td><td class="s2c"><span class="dot da"></span>74%</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="lider-retiros" class="panel">
+  <div class="ptitle">Retiros</div>
+  <div class="psub">Protocolo de retiro — validación y aprobación</div>
+  <div class="al da"><div><strong>1 retiro pendiente de validación</strong> — Jhon Ramírez · Wave Piloto 04.</div></div>
+  <div class="card">
+    <div class="ch"><div class="ct">Protocolo de retiro · Jhon Ramírez</div><span class="b rd">Acción requerida</span></div>
+    <div style="background:var(--s2);border:1px solid var(--br2);border-radius:8px;padding:11px;margin-bottom:11px;font-size:12px;line-height:1.9">
+      <div><span style="color:var(--tx2)">Agente:</span> <strong>Jhon Ramírez</strong> · #AG-0043 · Wave Piloto 04 · Día 4</div>
+      <div><span style="color:var(--tx2)">Motivo (formador):</span> No aprobó M4 en 3 intentos. Notas: 58% / 61% / 62%</div>
+      <div><span style="color:var(--tx2)">Avance:</span> 3/5 módulos · Promedio 61% · Asistencia: 96%</div>
+      <div><span style="color:var(--tx2)">¿Iba aprobando?</span> <span style="color:var(--red);font-weight:600">No — notas insuficientes desde M2</span></div>
+      <div><span style="color:var(--tx2)">Intentos retención:</span> <span style="color:var(--amb);font-weight:600">1 de 2 requeridos</span></div>
+    </div>
+    <div class="fg"><div class="fl">Observaciones del líder</div><textarea class="fta" rows="2" placeholder="Validación del protocolo de retiro..."></textarea></div>
+    <div style="display:flex;gap:7px;margin-top:3px">
+      <button class="btn" style="flex:1;background:var(--gl);color:var(--grn);border-color:rgba(26,122,64,0.22)">Confirmar retiro · notifica Jefe F&C y Jefe Ops</button>
+      <button class="btn" style="flex:1;background:var(--al);color:var(--amb);border-color:rgba(192,122,16,0.22)">Pedir retención adicional al formador</button>
+    </div>
+  </div>
+  <div class="card card-last">
+    <div class="ch"><div class="ct">Reporte de deserción — Mes actual</div><button class="btn sm">Exportar reporte</button></div>
+    <table><thead><tr><th>Agente</th><th>Grupo</th><th>Día retiro</th><th>Motivo</th><th>¿Iba aprobando?</th><th>Avance</th></tr></thead>
+    <tbody>
+      <tr><td>Pedro Suárez</td><td>Wave Piloto 03</td><td>Día 6</td><td>Abandono voluntario</td><td><span class="b gn">Sí (82%)</span></td><td>5/5 módulos</td></tr>
+      <tr><td>Carmen Ríos</td><td>Wave SAC-04</td><td>Día 3</td><td>Desempeño insuficiente</td><td><span class="b rd">No (54%)</span></td><td>2/5 módulos</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="lider-planificador" class="panel">
+  <div class="ptitle">Planificador mensual</div>
+  <div class="psub">Cierre automático el último día hábil del mes</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Planificador Marzo 2026 — Mis cuentas</div><div style="display:flex;gap:7px"><button class="btn sm">Ver por cuenta</button><button class="btn sm pri">Aprobar y cerrar</button></div></div>
+    <table><thead><tr><th>#</th><th>Actividad</th><th>Cuenta</th><th>Fecha</th><th>Cobertura</th><th>K2</th><th>K3</th><th>K4</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>MAN-01</td><td>Manejo objeciones</td><td>Piloto</td><td>10 mar</td><td class="s2c"><span class="dot dg"></span>96%</td><td class="s2c"><span class="dot dg"></span>87%</td><td><span class="b am">Pend.</span></td><td>—</td><td><span class="b am">Parcial</span></td></tr>
+      <tr><td>MAN-02</td><td>Tipificación</td><td>Piloto</td><td>14 mar</td><td class="s2c"><span class="dot dg"></span>84%</td><td class="s2c"><span class="dot dg"></span>80%</td><td><span class="b rd">No</span></td><td>—</td><td><span class="b bl">Activo</span></td></tr>
+      <tr><td>MAN-03</td><td>Calidad gestión</td><td>Piloto</td><td>20 mar</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="b am">Aprob. pend.</span></td></tr>
+      <tr><td>MAN-04</td><td>Protocolo cierre</td><td>SAC Col.</td><td>12 mar</td><td class="s2c"><span class="dot dg"></span>98%</td><td class="s2c"><span class="dot dg"></span>92%</td><td class="s2c"><span class="dot dg"></span>78%</td><td class="s2c"><span class="dot dg"></span>+6%</td><td><span class="b gn">Completo</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="lider-dashboard" class="panel">
+  <div class="ptitle">Dashboard KPIs del área</div>
+  <div class="psub">Indicadores de gestión del área F&C · Mis cuentas · Marzo 2026</div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Cobertura formativa</div><div class="sc-val" style="color:var(--grn)">91%</div><div class="sc-sub">Meta: ≥ 95%</div><div class="sc-dn">↓ Bajo meta</div></div>
+    <div class="sc"><div class="sc-lbl">Aprobación PostQuiz</div><div class="sc-val" style="color:var(--grn)">86%</div><div class="sc-sub">Meta: ≥ 85%</div><div class="sc-up">↑ En meta</div></div>
+    <div class="sc"><div class="sc-lbl">Satisfacción K1</div><div class="sc-val" style="color:var(--grn)">4.6</div><div class="sc-sub">Meta: ≥ 4.5</div><div class="sc-up">↑ En meta</div></div>
+    <div class="sc"><div class="sc-lbl">SLA K3 cumplimiento</div><div class="sc-val" style="color:var(--amb)">78%</div><div class="sc-sub">Meta: ≥ 90%</div><div class="sc-dn">↓ Bajo meta</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">KPIs clave del área</div></div>
+      <div class="kr"><span class="kn">Cobertura evaluación mensual</span><span class="kv" style="color:var(--grn)">94%</span><span class="ku">↑ en meta</span></div>
+      <div class="kr"><span class="kn">Tasa de aprobación 1er intento</span><span class="kv" style="color:var(--grn)">71%</span><span class="ku">↑ +4pts</span></div>
+      <div class="kr"><span class="kn">Tasa de deserción formación inicial</span><span class="kv" style="color:var(--amb)">11%</span><span class="kne">→ Estable</span></div>
+      <div class="kr"><span class="kn">Eficiencia del diseño (días)</span><span class="kv" style="color:var(--grn)">4.2 días</span><span class="ku">↓ bajo meta 5d</span></div>
+      <div class="kr"><span class="kn">SLA retiro cumplimiento</span><span class="kv" style="color:var(--red)">60%</span><span class="kd">↓ bajo meta</span></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">EF Formadores — Mes actual</div></div>
+      <table><thead><tr><th>Formador</th><th>EF Score</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>Luis Mora</td><td class="mono">92%</td><td><span class="b gn">✓ Óptimo</span></td></tr>
+        <tr><td>Andrea Pérez</td><td class="mono">88%</td><td><span class="b gn">✓ Óptimo</span></td></tr>
+        <tr><td>Jorge Salinas</td><td class="mono">85%</td><td><span class="b am">Seguimiento</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="lider-slas" class="panel">
+  <div class="ptitle">SLAs del área</div>
+  <div class="psub">Tiempos de entrega comprometidos con las áreas cliente</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Estado SLAs — Semana actual</div></div>
+    <table><thead><tr><th>Entregable</th><th>SLA</th><th>Estado actual</th><th>Riesgo</th></tr></thead>
+    <tbody>
+      <tr><td>Elaboración del MAN</td><td>24 horas</td><td><span class="b gn">3 completados a tiempo</span></td><td><span class="b gn">Sin riesgo</span></td></tr>
+      <tr><td>Diseño de material nuevo</td><td>5 días hábiles</td><td><span class="b gn">2/2 en tiempo</span></td><td><span class="b gn">Sin riesgo</span></td></tr>
+      <tr><td>Reporte PostQuiz</td><td>24h post-formación</td><td><span class="b gn">Al día</span></td><td><span class="b gn">Sin riesgo</span></td></tr>
+      <tr><td>Solicitud aplicabilidad K3</td><td>48h post-formación</td><td><span class="b am">MAN-01 tardó 52h</span></td><td><span class="b am">Leve retraso</span></td></tr>
+      <tr><td>Informe OJT diario</td><td>Antes 8:00 PM</td><td><span class="b rd">Ayer a las 8:42 PM</span></td><td><span class="b rd">Incumplimiento</span></td></tr>
+      <tr><td>Planificador mensual</td><td>3er día hábil</td><td><span class="b gn">Entregado 3 mar</span></td><td><span class="b gn">Sin riesgo</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+</div>
+
+
+<div class="role-view" id="view-jefe_fc">
+
+<div id="jefe_fc-inicio" class="panel on">
+  <div class="ptitle">Panel ejecutivo — Jefe F&C</div>
+  <div class="psub">Todas las cuentas · Visión consolidada · Permisos exclusivos activos</div>
+  <div class="al pu"><div><strong>Permiso exclusivo requerido:</strong> Modificación de pregunta con resultados — solicitado por Mónica Vega.</div></div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Cuentas activas</div><div class="sc-val" style="color:var(--teal)">87</div><div class="sc-sub">De 90 totales</div></div>
+    <div class="sc"><div class="sc-lbl">Grupos en formación</div><div class="sc-val" style="color:var(--blue)">8</div><div class="sc-sub">Iniciales y OJT</div></div>
+    <div class="sc"><div class="sc-lbl">Act. continua</div><div class="sc-val" style="color:var(--grn)">24</div><div class="sc-sub">Mes en curso</div></div>
+    <div class="sc"><div class="sc-lbl">Alertas escaladas</div><div class="sc-val" style="color:var(--red)">3</div><div class="sc-sub">Requieren acción</div></div>
+  </div>
+</div>
+
+<div id="jefe_fc-consolidado" class="panel">
+  <div class="ptitle">Consolidado — Todas las cuentas</div>
+  <div class="psub">Visión global de todos los procesos formativos activos</div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Agentes en formación inicial</div><div class="sc-val" style="color:var(--teal)">142</div><div class="sc-sub">8 grupos activos</div></div>
+    <div class="sc"><div class="sc-lbl">Agentes en OJT</div><div class="sc-val" style="color:var(--blue)">98</div><div class="sc-sub">6 grupos</div></div>
+    <div class="sc"><div class="sc-lbl">Agentes en formación continua</div><div class="sc-val" style="color:var(--grn)">612</div><div class="sc-sub">24 actividades activas</div></div>
+    <div class="sc"><div class="sc-lbl">Tasa deserción global</div><div class="sc-val" style="color:var(--amb)">9%</div><div class="sc-sub">Meta: ≤ 10%</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">KPIs del área — Mis cuentas consolidadas</div></div>
+      <div class="kr"><span class="kn">Aprobación promedio formación inicial</span><span class="kv" style="color:var(--grn)">84%</span><span class="ku">↑ +3pts</span></div>
+      <div class="kr"><span class="kn">Cobertura formación continua</span><span class="kv" style="color:var(--teal)">91%</span><span class="ku">↑ en meta</span></div>
+      <div class="kr"><span class="kn">SLA K3 cumplimiento</span><span class="kv" style="color:var(--amb)">78%</span><span class="kd">↓ bajo meta</span></div>
+      <div class="kr"><span class="kn">Tasa de deserción inicial</span><span class="kv" style="color:var(--grn)">9%</span><span class="ku">↓ mejorando</span></div>
+      <div class="kr"><span class="kn">Retroalim. supervisores OJT</span><span class="kv" style="color:var(--red)">62%</span><span class="kd">↓ bajo meta</span></div>
+      <div class="kr"><span class="kn">Satisfacción promedio K1</span><span class="kv" style="color:var(--grn)">4.6</span><span class="ku">↑ en meta</span></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Cuentas con mayor desviación</div></div>
+      <table><thead><tr><th>Cuenta</th><th>Segmento</th><th>KPI crítico</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>Cobranzas Fin. Sur</td><td>Cobranzas</td><td>Deserción 18%</td><td><span class="b rd">Crítico</span></td></tr>
+        <tr><td>Crosselling Móvil</td><td>Crosselling</td><td>K3 cumpl. 52%</td><td><span class="b am">Atención</span></td></tr>
+        <tr><td>Campaña Piloto</td><td>SAC</td><td>SLA retiro 60%</td><td><span class="b am">Atención</span></td></tr>
+        <tr><td>SAC Colombia</td><td>SAC</td><td>Sin alertas</td><td><span class="b gn">Óptimo</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="jefe_fc-alertas" class="panel">
+  <div class="ptitle">Alertas escaladas</div>
+  <div class="psub">Situaciones que requieren tu atención directa</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Alertas activas</div><span class="b rd">3</span></div>
+    <div class="log"><div class="log-ico" style="color:var(--red)">🔴</div><div class="log-body"><div class="log-act">Deserción inusual — Cobranzas Financiera Sur · 18%</div><div class="log-met">Líder: Fernanda Quiroz · 3 retiros esta semana · Patrón: todos en M3 · Acción sugerida: revisar contenido M3</div></div></div>
+    <div class="log"><div class="log-ico" style="color:var(--amb)">🟡</div><div class="log-body"><div class="log-act">SLA K3 incumplido — Campaña Piloto MAN-01</div><div class="log-met">Analista: Sandra Ríos · Vence hoy 17:00 · Sin carga aún · Segundo incumplimiento del mes</div></div></div>
+    <div class="log"><div class="log-ico" style="color:var(--amb)">🟡</div><div class="log-body"><div class="log-act">Retroalimentaciones supervisores bajo meta — Crosselling Móvil</div><div class="log-met">Solo 48% de retroalimentaciones registradas · Meta: 80% · Jefe Ops notificado sin respuesta</div></div></div>
+  </div>
+</div>
+
+<div id="jefe_fc-auditables" class="panel">
+  <div class="ptitle">Acciones exclusivas · Justificación obligatoria</div>
+  <div class="psub">Toda acción queda registrada en log inmutable visible para el Administrador</div>
+  <div class="al pu"><div>Estas acciones solo puede realizarlas el Jefe F&C. Requieren justificación obligatoria antes de confirmar.</div></div>
+  <div class="card">
+    <div class="ch"><div class="ct">Pendientes de tu aprobación</div><span class="b am">1 pendiente</span></div>
+    <div class="log">
+      <div class="log-ico" style="color:var(--amb)">◎</div>
+      <div class="log-body">
+        <div class="log-act">Modificar pregunta M4 — evaluación con resultados registrados</div>
+        <div class="log-met">Solicitado por Mónica Vega (Líder) · 16 mar · Wave Piloto 04 · "Error tipográfico en opción B"</div>
+        <div style="margin-top:8px">
+          <div class="fl" style="font-size:10px;margin-bottom:3px">Justificación (queda en log inmutable):</div>
+          <textarea class="fta" rows="2" style="font-size:12px" placeholder="Describe el motivo de la modificación..."></textarea>
+          <div style="display:flex;gap:7px;margin-top:5px"><button class="btn pri sm">Aprobar y modificar</button><button class="btn sm">Rechazar</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card card-last">
+    <div class="ch"><div class="ct">Acciones ejecutadas este mes</div></div>
+    <table><thead><tr><th>Fecha</th><th>Acción</th><th>Justificación</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>15 mar</td><td>Desbloqueo módulo — Juan Pérez</td><td>"Fuerza mayor — agente hospitalizado"</td><td><span class="b gn">Ejecutado</span></td></tr>
+      <tr><td>14 mar</td><td>Eliminación eval. — agente retirado</td><td>"Agente fuera del proceso"</td><td><span class="b gn">Ejecutado</span></td></tr>
+      <tr><td>10 mar</td><td>Modificar encuesta con resultados</td><td>"Pregunta ambigua corregida"</td><td><span class="b gn">Ejecutado</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="jefe_fc-log" class="panel">
+  <div class="ptitle">Log de auditoría</div>
+  <div class="psub">Historial de todas las acciones sensibles · Solo lectura · Inmutable</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Acciones auditables — Marzo 2026</div><button class="btn sm">Exportar log</button></div>
+    <table><thead><tr><th>Fecha/Hora</th><th>Usuario</th><th>Rol</th><th>Acción</th><th>Justificación</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">16/03 09:15</td><td>Jefe F&C</td><td>Jefe F&C</td><td>Modificar pregunta con resultados</td><td>Pendiente</td></tr>
+      <tr><td class="mono">15/03 14:32</td><td>Jefe F&C</td><td>Jefe F&C</td><td>Desbloqueo módulo — 3er intento</td><td>"Fuerza mayor — hospitalización"</td></tr>
+      <tr><td class="mono">14/03 11:20</td><td>Jefe F&C</td><td>Jefe F&C</td><td>Eliminación evaluación</td><td>"Agente fuera del proceso"</td></tr>
+      <tr><td class="mono">10/03 16:45</td><td>Jefe F&C</td><td>Jefe F&C</td><td>Modificar encuesta con resultados</td><td>"Corrección de pregunta ambigua"</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="jefe_fc-reportes" class="panel">
+  <div class="ptitle">Reportes transversales</div>
+  <div class="psub">Comparativos entre cuentas, formadores y períodos</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Comparativo de aprobación por cuenta</div></div>
+      <table><thead><tr><th>Cuenta</th><th>Segmento</th><th>Aprobación</th><th>vs mes ant.</th></tr></thead>
+      <tbody>
+        <tr><td>SAC Colombia</td><td>SAC</td><td class="mono">91%</td><td><span class="b gn">+2pts</span></td></tr>
+        <tr><td>Campaña Piloto</td><td>SAC</td><td class="mono">83%</td><td><span class="b gn">+3pts</span></td></tr>
+        <tr><td>Ventas Telco</td><td>Ventas</td><td class="mono">79%</td><td><span class="b am">-1pt</span></td></tr>
+        <tr><td>Cobranzas Fin.</td><td>Cobranzas</td><td class="mono">72%</td><td><span class="b rd">-5pts</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Desempeño por formador</div></div>
+      <table><thead><tr><th>Formador</th><th>Grupos</th><th>Aprobación</th><th>EF</th></tr></thead>
+      <tbody>
+        <tr><td>Luis Mora</td><td>3</td><td class="mono">86%</td><td class="s2c"><span class="dot dg"></span>92%</td></tr>
+        <tr><td>Andrea Pérez</td><td>2</td><td class="mono">89%</td><td class="s2c"><span class="dot dg"></span>88%</td></tr>
+        <tr><td>Jorge Salinas</td><td>2</td><td class="mono">81%</td><td class="s2c"><span class="dot da"></span>85%</td></tr>
+        <tr><td>Valentina Cruz</td><td>1</td><td class="mono">74%</td><td class="s2c"><span class="dot dr"></span>79%</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="jefe_fc-grupos" class="panel">
+  <div class="ptitle">Grupos y OJT — Vista Jefe F&C</div>
+  <div class="psub">Todos los grupos activos · Misma vista que líder + todas las cuentas</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Todos los grupos activos</div></div>
+    <table><thead><tr><th>Grupo</th><th>Cuenta</th><th>Líder</th><th>Formador</th><th>Agentes</th><th>Etapa</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>Wave Piloto 04</td><td>Piloto</td><td>M. Vega</td><td>L. Mora</td><td>18</td><td><span class="b tl">Inicial Día 4</span></td><td class="s2c"><span class="dot da"></span>Retiro pend.</td></tr>
+      <tr><td>Wave Piloto 03</td><td>Piloto</td><td>M. Vega</td><td>L. Mora</td><td>15</td><td><span class="b bl">OJT Día 3</span></td><td class="s2c"><span class="dot dr"></span>2 bajo meta</td></tr>
+      <tr><td>Wave SAC-05</td><td>SAC Col.</td><td>M. Vega</td><td>A. Pérez</td><td>22</td><td><span class="b tl">Inicial Día 7</span></td><td class="s2c"><span class="dot dg"></span>Sin alertas</td></tr>
+      <tr><td>Wave Cob-01</td><td>Cobranzas</td><td>F. Quiroz</td><td>V. Cruz</td><td>16</td><td><span class="b tl">Inicial Día 5</span></td><td class="s2c"><span class="dot dr"></span>Deserción alta</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="jefe_fc-continua" class="panel">
+  <div class="ptitle">Formación continua — Vista Jefe F&C</div>
+  <div class="psub">Todas las actividades activas · Todas las cuentas</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Planificador consolidado — Marzo 2026</div><button class="btn sm">Exportar</button></div>
+    <table><thead><tr><th>MAN</th><th>Actividad</th><th>Cuenta</th><th>Líder</th><th>K2</th><th>K3</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>MAN-01</td><td>Manejo objeciones</td><td>Piloto</td><td>M. Vega</td><td class="s2c"><span class="dot dg"></span>87%</td><td><span class="b am">Solicitado</span></td><td><span class="b am">K3 pend.</span></td></tr>
+      <tr><td>MAN-04</td><td>Protocolo de cierre</td><td>SAC Col.</td><td>M. Vega</td><td class="s2c"><span class="dot dg"></span>92%</td><td class="s2c"><span class="dot dg"></span>78%</td><td><span class="b gn">Completo</span></td></tr>
+      <tr><td>MAN-07</td><td>Gestión de cobranza efectiva</td><td>Cobranzas</td><td>F. Quiroz</td><td class="s2c"><span class="dot da"></span>74%</td><td><span class="b rd">No inic.</span></td><td><span class="b am">Revisar</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="jefe_fc-retiros" class="panel">
+  <div class="ptitle">Retiros — Todas las cuentas</div>
+  <div class="psub">Reporte consolidado de deserción</div>
+  <div class="sr3">
+    <div class="sc"><div class="sc-lbl">Retiros mes actual</div><div class="sc-val" style="color:var(--amb)">11</div><div class="sc-sub">Vs 8 mes anterior</div></div>
+    <div class="sc"><div class="sc-lbl">Tasa global deserción</div><div class="sc-val" style="color:var(--amb)">9%</div><div class="sc-sub">Meta: ≤ 10%</div></div>
+    <div class="sc"><div class="sc-lbl">Motivo principal</div><div class="sc-val" style="font-size:16px;color:var(--red)">Desempeño</div><div class="sc-sub">6 de 11 retiros</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Detalle de retiros — Mes actual</div><button class="btn sm">Exportar reporte</button></div>
+    <table><thead><tr><th>Agente</th><th>Cuenta</th><th>Día</th><th>Motivo</th><th>Iba aprobando</th><th>Avance</th></tr></thead>
+    <tbody>
+      <tr><td>Jhon Ramírez</td><td>Piloto</td><td>Día 4</td><td>Desempeño M4</td><td><span class="b rd">No</span></td><td>3/5 mód. (61%)</td></tr>
+      <tr><td>Pedro Suárez</td><td>Piloto</td><td>Día 6</td><td>Abandono voluntario</td><td><span class="b gn">Sí (82%)</span></td><td>5/5 mód.</td></tr>
+      <tr><td>Carmen Ríos</td><td>SAC Col.</td><td>Día 3</td><td>Desempeño insuficiente</td><td><span class="b rd">No</span></td><td>2/5 (54%)</td></tr>
+      <tr><td>Luis Vásquez</td><td>Cobranzas</td><td>Día 5</td><td>Desempeño insuficiente</td><td><span class="b rd">No</span></td><td>4/5 (68%)</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="jefe_fc-dashboard" class="panel">
+  <div class="ptitle">Dashboard KPIs del área</div>
+  <div class="psub">Indicadores de gestión · Todas las cuentas</div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Cobertura formativa global</div><div class="sc-val" style="color:var(--grn)">89%</div><div class="sc-sub">Meta: ≥ 95%</div><div class="sc-dn">↓ Bajo meta</div></div>
+    <div class="sc"><div class="sc-lbl">Aprobación global inicial</div><div class="sc-val" style="color:var(--grn)">84%</div><div class="sc-sub">Meta: ≥ 85%</div><div class="sc-up">↑ Cerca</div></div>
+    <div class="sc"><div class="sc-lbl">K1 Satisfacción</div><div class="sc-val" style="color:var(--grn)">4.6</div><div class="sc-sub">Meta: ≥ 4.5</div><div class="sc-up">↑ En meta</div></div>
+    <div class="sc"><div class="sc-lbl">SLA K3 global</div><div class="sc-val" style="color:var(--amb)">74%</div><div class="sc-sub">Meta: ≥ 90%</div><div class="sc-dn">↓ Bajo meta</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Resumen ejecutivo para gerencia</div><button class="btn sm">Exportar informe gerencial</button></div>
+    <div class="fr3">
+      <div><div class="sc-lbl">Horas hombre invertidas</div><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--blue)">1.842h</div><div style="font-size:11px;color:var(--tx3)">Mes actual · Todas las cuentas</div></div>
+      <div><div class="sc-lbl">Agentes impactados</div><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--teal)">852</div><div style="font-size:11px;color:var(--tx3)">Formación inicial + continua</div></div>
+      <div><div class="sc-lbl">Aplicabilidad promedio K3</div><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--grn)">74%</div><div style="font-size:11px;color:var(--tx3)">Promedio todas las actividades</div></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+<div class="role-view" id="view-jefe_ops">
+
+<div id="jefe_ops-inicio" class="panel on">
+  <div class="ptitle">Panel operativo</div>
+  <div class="psub">Hernán Cárdenas · Jefe de Operaciones · Campaña Piloto</div>
+  <div class="al da"><div><strong>Acta pendiente:</strong> Wave Piloto 04 — OJT semana 1. Firma antes de las 5:00 PM.</div></div>
+  <div class="sr3">
+    <div class="sc"><div class="sc-lbl">Grupos activos</div><div class="sc-val" style="color:var(--teal)">2</div><div class="sc-sub">1 inicial · 1 OJT</div></div>
+    <div class="sc"><div class="sc-lbl">Aprobación promedio</div><div class="sc-val" style="color:var(--grn)">83%</div><div class="sc-up">↑ en meta</div></div>
+    <div class="sc"><div class="sc-lbl">Actas por firmar</div><div class="sc-val" style="color:var(--red)">1</div><div class="sc-sub">Vence hoy</div></div>
+  </div>
+</div>
+
+<div id="jefe_ops-inicial" class="panel">
+  <div class="ptitle">Tablero formación inicial</div>
+  <div class="psub">Vista de resultados · Solo lectura</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Wave Piloto 04</div><span class="b tl">Día 4/10</span></div>
+      <div class="pw"><div class="ph"><span>Aprobación promedio</span><span style="font-weight:600">83%</span></div><div class="pt"><div class="pf" style="width:83%;background:var(--grn)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Asistencia acumulada</span><span style="font-weight:600">96%</span></div><div class="pt"><div class="pf" style="width:96%;background:var(--teal)"></div></div></div>
+      <div class="pw"><div class="ph"><span>Módulos completados</span><span style="font-weight:600">3/5</span></div><div class="pt"><div class="pf" style="width:60%;background:var(--blue)"></div></div></div>
+      <div style="margin-top:8px;font-size:11px;color:var(--tx2)">Formador: Luis Mora · Líder: Mónica Vega · 1 retiro activo</div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Resultados por módulo</div></div>
+      <table><thead><tr><th>Módulo</th><th>Promedio</th><th>Aprobados</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>M1 · Producto</td><td class="mono">91%</td><td>16/18</td><td><span class="b gn">OK</span></td></tr>
+        <tr><td>M2 · Sistema</td><td class="mono">85%</td><td>14/18</td><td><span class="b gn">OK</span></td></tr>
+        <tr><td>M3 · Calidad</td><td class="mono">88%</td><td>15/18</td><td><span class="b gn">OK</span></td></tr>
+        <tr><td>M4 · Objeciones</td><td class="mono" style="color:var(--red)">62%</td><td>En recup.</td><td><span class="b am">Recuperación</span></td></tr>
+        <tr><td>M5 · Proceso</td><td>—</td><td>—</td><td><span class="b gy">Pendiente</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="jefe_ops-ojt" class="panel">
+  <div class="ptitle">Tablero OJT</div>
+  <div class="psub">Wave Piloto 03 · Día 3/6</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Indicadores del grupo</div></div>
+      <table><thead><tr><th>Agente</th><th>AHT</th><th>Calidad</th><th>CSAT</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>Carlos Mendoza</td><td class="s2c"><span class="dot dr"></span>5:42</td><td class="s2c"><span class="dot dg"></span>87%</td><td class="s2c"><span class="dot dg"></span>4.4</td><td><span class="b rd">AHT riesgo</span></td></tr>
+        <tr><td>Ana Torres</td><td class="s2c"><span class="dot dg"></span>4:12</td><td class="s2c"><span class="dot dg"></span>91%</td><td class="s2c"><span class="dot dg"></span>4.6</td><td><span class="b gn">En meta</span></td></tr>
+        <tr><td>Sofía Vargas</td><td class="s2c"><span class="dot da"></span>5:10</td><td class="s2c"><span class="dot dg"></span>86%</td><td class="s2c"><span class="dot dg"></span>4.2</td><td><span class="b am">Seguimiento</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Asignar supervisor</div></div>
+      <div class="fg"><div class="fl">Grupo</div><select class="fs"><option>Wave Piloto 05 — inicia 20 mar</option></select></div>
+      <div class="fg"><div class="fl">Supervisor a asignar</div><select class="fs"><option>Diego Ruiz</option><option>Sandra Gil</option><option>Héctor Cano</option></select></div>
+      <button class="btn pri" style="width:100%;margin-top:7px">Asignar · notificar supervisor</button>
+      <div style="font-size:11px;color:var(--tx3);margin-top:7px">Permiso compartido con Líder F&C y Jefe F&C.</div>
+    </div>
+  </div>
+</div>
+
+<div id="jefe_ops-continua" class="panel">
+  <div class="ptitle">Tablero formación continua</div>
+  <div class="psub">Resultados de actividades del mes · Solo lectura</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Actividades del mes — Campaña Piloto</div></div>
+    <table><thead><tr><th>Actividad</th><th>Fecha</th><th>Agentes</th><th>K2</th><th>K3</th><th>KPI inicial</th><th>KPI final</th></tr></thead>
+    <tbody>
+      <tr><td>Manejo objeciones</td><td>10 mar</td><td>38</td><td class="s2c"><span class="dot dg"></span>87%</td><td><span class="b am">Pend.</span></td><td class="mono">71%</td><td class="mono" style="color:var(--tx3)">En proceso</td></tr>
+      <tr><td>Tipificación correcta</td><td>14 mar</td><td>45</td><td class="s2c"><span class="dot dg"></span>80%</td><td><span class="b rd">No inic.</span></td><td class="mono">68%</td><td class="mono" style="color:var(--tx3)">Día 8 hoy</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="jefe_ops-actas" class="panel">
+  <div class="ptitle">Actas por firmar</div>
+  <div class="psub">Actas de entrega OJT pendientes de tu firma digital</div>
+  <div class="al da"><div><strong>Acta pendiente:</strong> Wave Piloto 04 — Firma antes de las 5:00 PM. Si no firmas, escala a Gte. Cuenta y Jefe F&C.</div></div>
+  <div class="card">
+    <div class="ch"><div class="ct">Acta de entrega OJT — Wave Piloto 04</div><button class="btn pri">Firmar acta digitalmente</button></div>
+    <div class="acta">
+      <div class="acta-hd">Acta de Entrega a Operación · Wave Piloto 04</div>
+      <div class="acta-r"><span class="acta-k">Cuenta</span><span>Campaña Piloto · GroupCOS BPO</span></div>
+      <div class="acta-r"><span class="acta-k">Grupo</span><span>18 agentes — 15 aprobados · 2 retiros · 1 ausente</span></div>
+      <div class="acta-r"><span class="acta-k">Formador</span><span>Luis Mora</span></div>
+      <div class="acta-r"><span class="acta-k">Período OJT</span><span>10 mar — 16 mar 2026 (6 días)</span></div>
+      <div class="acta-r"><span class="acta-k">Aprobación promedio</span><span>83%</span></div>
+      <div class="acta-r"><span class="acta-k">Agentes en meta al día 6</span><span>12/15 (80%)</span></div>
+      <div class="acta-r"><span class="acta-k">Retiros documentados</span><span>2 — protocolo completo</span></div>
+      <div class="acta-r"><span class="acta-k">Firma Líder F&C</span><span style="color:var(--grn);font-weight:600">✓ Mónica Vega · 15 mar</span></div>
+      <div class="acta-r"><span class="acta-k">Firma Jefe Operaciones</span><span style="color:var(--amb);font-weight:600">⚠ Pendiente — vence hoy</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="jefe_ops-supervisores" class="panel">
+  <div class="ptitle">Asignar supervisores</div>
+  <div class="psub">Asignación de supervisores a grupos OJT</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Grupos sin supervisor asignado</div></div>
+    <table><thead><tr><th>Grupo</th><th>Etapa</th><th>Inicio OJT</th><th>Supervisor actual</th><th>Acción</th></tr></thead>
+    <tbody>
+      <tr><td>Wave Piloto 05</td><td><span class="b tl">Inicial → OJT 20 mar</span></td><td>20 mar</td><td><span class="b rd">Sin asignar</span></td><td><button class="btn sm pri">Asignar</button></td></tr>
+      <tr><td>Wave Piloto 04</td><td><span class="b bl">OJT activo</span></td><td>10 mar</td><td>Diego Ruiz · Sandra Gil</td><td><button class="btn sm">Cambiar</button></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="jefe_ops-informe" class="panel">
+  <div class="ptitle">Informe gerencial</div>
+  <div class="psub">Resumen ejecutivo · Campaña Piloto · Marzo 2026</div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Horas hombre</div><div class="sc-val" style="color:var(--blue)">284h</div><div class="sc-sub">Formación inicial + continua</div></div>
+    <div class="sc"><div class="sc-lbl">Agentes impactados</div><div class="sc-val" style="color:var(--teal)">83</div><div class="sc-sub">Directos en formación</div></div>
+    <div class="sc"><div class="sc-lbl">Satisfacción K1</div><div class="sc-val" style="color:var(--grn)">4.6/5</div><div class="sc-sub">Promedio del mes</div></div>
+    <div class="sc"><div class="sc-lbl">Aplicabilidad K3</div><div class="sc-val" style="color:var(--amb)">74%</div><div class="sc-sub">Promedio actividades</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Impacto en KPIs operativos</div><button class="btn sm">Exportar PDF</button></div>
+    <table><thead><tr><th>Formación</th><th>KPI</th><th>Antes</th><th>Después</th><th>Variación</th></tr></thead>
+    <tbody>
+      <tr><td>Manejo objeciones</td><td>FCR</td><td class="mono">71%</td><td class="mono">76%</td><td><span class="b gn">+5pts ↑</span></td></tr>
+      <tr><td>Tipificación correcta</td><td>Calidad tipif.</td><td class="mono">68%</td><td class="mono" style="color:var(--tx3)">Pendiente día 8</td><td><span class="b gy">—</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+</div>
+
+
+<div class="role-view" id="view-admin">
+
+<div id="admin-inicio" class="panel on">
+  <div class="ptitle">Administración de la plataforma</div>
+  <div class="psub">Administrador General · 3.041 usuarios activos · 90 cuentas</div>
+  <div class="al in"><div><strong>Nueva implementación:</strong> "Ventas Telco Sur" — solicitud del Jefe F&C. Crear y parametrizar.</div></div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Cuentas activas</div><div class="sc-val" style="color:var(--teal)">87</div><div class="sc-sub">De 90 totales</div></div>
+    <div class="sc"><div class="sc-lbl">En implementación</div><div class="sc-val" style="color:var(--blue)">2</div></div>
+    <div class="sc"><div class="sc-lbl">En desimplementación</div><div class="sc-val" style="color:var(--amb)">1</div></div>
+    <div class="sc"><div class="sc-lbl">Usuarios activos</div><div class="sc-val" style="color:var(--grn)">3.041</div></div>
+  </div>
+</div>
+
+<div id="admin-cuentas" class="panel">
+  <div class="ptitle">Gestión de cuentas</div>
+  <div class="psub">Crear, parametrizar, implementar y desimplementar cuentas</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Todas las cuentas</div><button class="btn sm pri">+ Nueva cuenta</button></div>
+    <table><thead><tr><th>Cuenta</th><th>Segmento</th><th>Líderes</th><th>Formadores</th><th>Agentes</th><th>Estado</th><th>Acción</th></tr></thead>
+    <tbody>
+      <tr><td><div class="an">Ventas Telco Sur</div></td><td>Ventas</td><td>1</td><td>2</td><td>180</td><td><span class="b bl">Implementación</span></td><td><button class="btn sm">Parametrizar</button></td></tr>
+      <tr><td><div class="an">Campaña Piloto</div></td><td>SAC</td><td>1</td><td>3</td><td>320</td><td><span class="b gn">Activa</span></td><td><button class="btn sm">Ver</button></td></tr>
+      <tr><td><div class="an">SAC Colombia Norte</div></td><td>SAC</td><td>2</td><td>4</td><td>480</td><td><span class="b gn">Activa</span></td><td><button class="btn sm">Ver</button></td></tr>
+      <tr><td><div class="an">Cobranzas Financiera Sur</div></td><td>Cobranzas</td><td>1</td><td>3</td><td>415</td><td><span class="b gn">Activa</span></td><td><button class="btn sm">Ver</button></td></tr>
+      <tr><td><div class="an">Crosselling Móvil</div></td><td>Crosselling</td><td>1</td><td>2</td><td>290</td><td><span class="b gn">Activa</span></td><td><button class="btn sm">Ver</button></td></tr>
+      <tr><td><div class="an">Backoffice Seguros</div></td><td>Backoffice</td><td>1</td><td>2</td><td>220</td><td><span class="b am">Desimplementando</span></td><td><button class="btn sm dan">Repositorio</button></td></tr>
+    </tbody></table>
+  </div>
+  <div class="card card-last">
+    <div class="ch"><div class="ct">Parametrizar nueva cuenta</div></div>
+    <div class="fr2">
+      <div class="fg"><div class="fl">Nombre de la cuenta</div><input class="fi" placeholder="Ej: Ventas Telco Sur"></div>
+      <div class="fg"><div class="fl">Segmento</div><select class="fs"><option>Servicio al cliente (SAC)</option><option>Ventas</option><option>Cobranzas</option><option>Backoffice</option><option>Crosselling</option></select></div>
+    </div>
+    <div style="margin-bottom:11px"><div class="fl" style="margin-bottom:5px">Indicadores propios (parametrizables)</div>
+      <table><thead><tr><th>Nombre del KPI</th><th>Escala</th><th>Mejora cuando</th></tr></thead>
+      <tbody>
+        <tr><td><input class="fi" style="width:100%" placeholder="Ej: TMO"></td><td><select class="fs"><option>Minutos:segundos</option><option>Porcentaje</option><option>Número entero</option></select></td><td><select class="fs"><option>Disminuye</option><option>Aumenta</option></select></td></tr>
+        <tr><td><input class="fi" style="width:100%" placeholder="Ej: Ratio contactabilidad"></td><td><select class="fs"><option>Porcentaje</option><option>Número entero</option></select></td><td><select class="fs"><option>Aumenta</option><option>Disminuye</option></select></td></tr>
+      </tbody></table>
+    </div>
+    <button class="btn pri">Crear cuenta y parametrizar indicadores</button>
+  </div>
+</div>
+
+<div id="admin-usuarios" class="panel">
+  <div class="ptitle">Usuarios y perfiles</div>
+  <div class="psub">Gestión de usuarios · 3.041 activos de 3.050 parametrizados</div>
+  <div class="sr4">
+    <div class="sc"><div class="sc-lbl">Agentes</div><div class="sc-val" style="color:var(--teal)">2.800</div></div>
+    <div class="sc"><div class="sc-lbl">Formadores</div><div class="sc-val" style="color:var(--blue)">60</div></div>
+    <div class="sc"><div class="sc-lbl">Analistas</div><div class="sc-val" style="color:var(--amb)">55</div></div>
+    <div class="sc"><div class="sc-lbl">Supervisores</div><div class="sc-val" style="color:var(--pur)">100</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Buscar usuario</div><button class="btn sm pri">+ Nuevo usuario</button></div>
+    <div style="display:flex;gap:8px;margin-bottom:13px">
+      <input class="fi" style="flex:1" placeholder="Buscar por nombre, ID o correo...">
+      <select class="fs" style="width:160px"><option>Todos los roles</option><option>Agente</option><option>Formador</option><option>Analista</option><option>Supervisor</option><option>Líder F&C</option><option>Jefe F&C</option><option>Jefe Ops</option></select>
+    </div>
+    <table><thead><tr><th>Nombre</th><th>ID</th><th>Rol</th><th>Cuenta</th><th>Estado</th><th>Acción</th></tr></thead>
+    <tbody>
+      <tr><td>Carlos Mendoza</td><td class="mono">#AG-0041</td><td><span class="b tl">Agente</span></td><td>Piloto</td><td><span class="b gn">Activo</span></td><td><button class="btn sm">Editar</button></td></tr>
+      <tr><td>Luis Mora</td><td class="mono">#FM-0012</td><td><span class="b rd">Formador</span></td><td>Piloto</td><td><span class="b gn">Activo</span></td><td><button class="btn sm">Editar</button></td></tr>
+      <tr><td>Sandra Ríos</td><td class="mono">#AC-0008</td><td><span class="b am">Analista Cal.</span></td><td>Piloto</td><td><span class="b gn">Activo</span></td><td><button class="btn sm">Editar</button></td></tr>
+      <tr><td>Jhon Ramírez</td><td class="mono">#AG-0043</td><td><span class="b tl">Agente</span></td><td>Piloto</td><td><span class="b am">Retiro proceso</span></td><td><button class="btn sm">Ver</button></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="admin-impl" class="panel">
+  <div class="ptitle">Implementaciones activas</div>
+  <div class="psub">Cuentas en proceso de implementación · Alertas robustas activas</div>
+  <div class="al in"><div><strong>Ventas Telco Sur:</strong> Implementación iniciada. Todos los roles deben recibir alertas de seguimiento hasta el primer Wave completado.</div></div>
+  <div class="card">
+    <div class="ch"><div class="ct">Cuentas en implementación</div></div>
+    <table><thead><tr><th>Cuenta</th><th>Segmento</th><th>Inicio</th><th>Primer Wave</th><th>Avance</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td><div class="an">Ventas Telco Sur</div></td><td>Ventas</td><td>15 mar</td><td>Pendiente</td><td>
+        <div class="pt" style="width:120px"><div class="pf" style="width:20%;background:var(--blue)"></div></div>
+      </td><td><span class="b bl">Parametrizando</span></td></tr>
+      <tr><td><div class="an">Backoffice Seguros 2</div></td><td>Backoffice</td><td>1 mar</td><td>Wave BS-01 (día 5)</td><td>
+        <div class="pt" style="width:120px"><div class="pf" style="width:65%;background:var(--teal)"></div></div>
+      </td><td><span class="b tl">Wave activo</span></td></tr>
+    </tbody></table>
+  </div>
+  <div class="card card-last">
+    <div class="ch"><div class="ct">Configurar alertas de implementación</div></div>
+    <div style="font-size:12px;color:var(--tx2);margin-bottom:12px">Las alertas de implementación llegan a todos los roles con escalamiento por jerarquía.</div>
+    <ul class="cklist">
+      <li><div class="ck done">✓</div>Alerta creación de cuenta → Jefe F&C + Admin</li>
+      <li><div class="ck done">✓</div>Alerta configuración de indicadores → Jefe F&C</li>
+      <li><div class="ck done">✓</div>Alerta asignación de formador → Líder F&C</li>
+      <li><div class="ck pend"></div>Alerta inicio de Wave → Jefe Ops + Jefe F&C</li>
+      <li><div class="ck pend"></div>Alerta OJT activo → Jefe Ops + Líder F&C</li>
+      <li><div class="ck pend"></div>Alerta acta entregada → Gerente de Cuenta</li>
+    </ul>
+  </div>
+</div>
+
+<div id="admin-desimpl" class="panel">
+  <div class="ptitle">Desimplementaciones</div>
+  <div class="psub">Solo el Administrador puede ejecutar la desimplementación</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Cuentas en desimplementación</div></div>
+    <table><thead><tr><th>Cuenta</th><th>Segmento</th><th>Solicitud</th><th>Repositorio</th><th>Acción</th></tr></thead>
+    <tbody>
+      <tr><td><div class="an">Backoffice Seguros</div></td><td>Backoffice</td><td>10 mar · Jefe F&C</td><td><span class="b am">Parcial</span></td><td><button class="btn sm dan">Gestionar repositorio</button></td></tr>
+    </tbody></table>
+  </div>
+  <div class="card card-last">
+    <div class="ch"><div class="ct">Gestión repositorio — Backoffice Seguros</div></div>
+    <div style="font-size:12px;color:var(--tx2);margin-bottom:12px">Selecciona qué información debe quedar archivada para esta cuenta:</div>
+    <ul class="cklist">
+      <li><div class="ck done">✓</div>Material formativo (pensum, módulos) — 24 archivos</li>
+      <li><div class="ck done">✓</div>Planificadores mensuales (12 meses) — archivados</li>
+      <li><div class="ck done">✓</div>Actas de entrega (8 waves) — archivadas</li>
+      <li><div class="ck pend"></div>Resultados históricos de agentes — 220 registros</li>
+      <li><div class="ck pend"></div>Reportes Kirkpatrick (K1-K4)</li>
+    </ul>
+    <button class="btn pri" style="margin-top:10px">Confirmar y archivar repositorio · Desimplementar cuenta</button>
+  </div>
+</div>
+
+<div id="admin-log" class="panel">
+  <div class="ptitle">Log de auditoría</div>
+  <div class="psub">Historial completo de acciones sensibles · Inmutable · Solo lectura</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Acciones auditables — Marzo 2026</div><button class="btn sm">Exportar log completo</button></div>
+    <table><thead><tr><th>Fecha/Hora</th><th>Usuario</th><th>Rol</th><th>Cuenta</th><th>Acción</th><th>Justificación</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">16/03 09:15</td><td>Jefe F&C</td><td>Jefe F&C</td><td>Piloto</td><td>Modificar pregunta con resultados</td><td><span class="b am">Pendiente</span></td></tr>
+      <tr><td class="mono">15/03 14:32</td><td>Jefe F&C</td><td>Jefe F&C</td><td>Piloto</td><td>Desbloqueo módulo — 3er intento</td><td>"Hospitalización agente"</td></tr>
+      <tr><td class="mono">14/03 11:20</td><td>Jefe F&C</td><td>Jefe F&C</td><td>SAC Col.</td><td>Eliminación evaluación</td><td>"Agente retirado"</td></tr>
+      <tr><td class="mono">10/03 16:45</td><td>Jefe F&C</td><td>Jefe F&C</td><td>Piloto</td><td>Modificar encuesta con resultados</td><td>"Corrección pregunta ambigua"</td></tr>
+      <tr><td class="mono">05/03 10:00</td><td>Admin</td><td>Administrador</td><td>Backoffice</td><td>Inicio desimplementación</td><td>"Solicitud cliente confirmada"</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="admin-permisos" class="panel">
+  <div class="ptitle">Permisos por rol</div>
+  <div class="psub">Matriz de permisos configurada del sistema</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Resumen de permisos críticos</div></div>
+    <table><thead><tr><th>Acción</th><th>Agente</th><th>Formador</th><th>Analista</th><th>Supervisor</th><th>Líder</th><th>Jefe F&C</th><th>Jefe Ops</th></tr></thead>
+    <tbody>
+      <tr><td>Crear grupo</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="s2c"><span class="dot dg"></span>Sí</td><td class="s2c"><span class="dot dg"></span>Sí</td><td>—</td></tr>
+      <tr><td>Asignar supervisor</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="s2c"><span class="dot dg"></span>Sí</td><td class="s2c"><span class="dot dg"></span>Sí</td><td class="s2c"><span class="dot dg"></span>Sí</td></tr>
+      <tr><td>Cargar evaluación</td><td>—</td><td class="s2c"><span class="dot dg"></span>Sí</td><td>—</td><td>—</td><td>Reemplazo</td><td>Reemplazo</td><td>—</td></tr>
+      <tr><td>Editar eval. con resultados</td><td>—</td><td class="s2c"><span class="dot dr"></span>No</td><td>—</td><td>—</td><td class="s2c"><span class="dot dr"></span>No</td><td class="s2c"><span class="dot dg"></span>Sí*</td><td>—</td></tr>
+      <tr><td>Eliminar evaluación</td><td>—</td><td class="s2c"><span class="dot dr"></span>No</td><td>—</td><td>—</td><td class="s2c"><span class="dot dr"></span>No</td><td class="s2c"><span class="dot dg"></span>Sí*</td><td>—</td></tr>
+      <tr><td>Aprobar retiro</td><td>—</td><td>Marca</td><td>—</td><td>—</td><td class="s2c"><span class="dot dg"></span>Aprueba</td><td class="s2c"><span class="dot dg"></span>Aprueba</td><td>—</td></tr>
+      <tr><td>Aprobar acta OJT</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="s2c"><span class="dot dg"></span>Sí</td></tr>
+    </tbody></table>
+    <div style="font-size:11px;color:var(--tx3);margin-top:8px">* Requiere justificación obligatoria y queda en log inmutable.</div>
+  </div>
+</div>
+
+<div id="admin-repo" class="panel">
+  <div class="ptitle">Repositorio de archivo</div>
+  <div class="psub">Información archivada de cuentas desimplementadas</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Cuentas archivadas</div></div>
+    <table><thead><tr><th>Cuenta</th><th>Desimplementada</th><th>Material</th><th>Planificadores</th><th>Actas</th><th>Resultados</th><th>Acceso</th></tr></thead>
+    <tbody>
+      <tr><td><div class="an">Ventas Retail 2024</div></td><td>Dic 2024</td><td class="s2c"><span class="dot dg"></span>32 archivos</td><td class="s2c"><span class="dot dg"></span>12 meses</td><td class="s2c"><span class="dot dg"></span>10 actas</td><td class="s2c"><span class="dot dg"></span>680 agentes</td><td><button class="btn sm">Ver repositorio</button></td></tr>
+      <tr><td><div class="an">SAC Bogotá Legacy</div></td><td>Jun 2024</td><td class="s2c"><span class="dot dg"></span>18 archivos</td><td class="s2c"><span class="dot dg"></span>8 meses</td><td class="s2c"><span class="dot dg"></span>6 actas</td><td class="s2c"><span class="dot da"></span>Parcial</td><td><button class="btn sm">Ver repositorio</button></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div id="admin-config" class="panel">
+  <div class="ptitle">Configuración general</div>
+  <div class="psub">Parámetros globales de la plataforma</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">SLAs globales del sistema</div></div>
+      <table><thead><tr><th>Entregable</th><th>SLA actual</th><th>Editar</th></tr></thead>
+      <tbody>
+        <tr><td>MAN — aprobación líder</td><td>24 horas</td><td><button class="btn sm">Editar</button></td></tr>
+        <tr><td>Retiro — validación líder</td><td>24 horas</td><td><button class="btn sm">Editar</button></td></tr>
+        <tr><td>K3 — carga analista</td><td>5 días hábiles</td><td><button class="btn sm">Editar</button></td></tr>
+        <tr><td>KPI final — carga formador</td><td>8 días post-formación</td><td><button class="btn sm">Editar</button></td></tr>
+        <tr><td>Acta OJT — firma Jefe Ops</td><td>24 horas</td><td><button class="btn sm">Editar</button></td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Parámetros de evaluaciones</div></div>
+      <table><thead><tr><th>Tipo</th><th>Mín. preguntas</th><th>Umbral</th></tr></thead>
+      <tbody>
+        <tr><td>Formación inicial — módulo</td><td>8</td><td>80%</td></tr>
+        <tr><td>Formación continua</td><td>7</td><td>85%</td></tr>
+        <tr><td>Preturnos</td><td>3</td><td>Sin umbral</td></tr>
+        <tr><td>Encuestas K1</td><td>5</td><td>—</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+<script>
+const ROLES={
+  agente:{name:"Carlos Mendoza",role:"Agente · Campaña Piloto",initials:"CM",color:"#0D7A5F",alerts:true},
+  formador:{name:"Luis Mora",role:"Formador · Campaña Piloto",initials:"LM",color:"#C0272D",alerts:true},
+  analista:{name:"Sandra Ríos",role:"Analista Calidad · Piloto",initials:"SR",color:"#C07A10",alerts:true},
+  supervisor:{name:"Diego Ruiz",role:"Supervisor · Piloto",initials:"DR",color:"#5C3DB5",alerts:true},
+  lider:{name:"Mónica Vega",role:"Líder F&C · 4 cuentas",initials:"MV",color:"#1A5FBF",alerts:true},
+  jefe_fc:{name:"Jefe F&C (Tu perfil)",role:"Jefe F&C · Todas las cuentas",initials:"JF",color:"#1A7A40",alerts:true},
+  jefe_ops:{name:"Hernán Cárdenas",role:"Jefe Operaciones · Piloto",initials:"HC",color:"#B54020",alerts:true},
+  admin:{name:"Administrador",role:"Admin General · Plataforma",initials:"AD",color:"#5C6070",alerts:false}
+};
+
+const SIDEBARS={
+  agente:[
+    {sec:"Mi formación",items:[
+      {label:"Inicio",panel:"inicio",ico:"⊞"},
+      {label:"Formación inicial",panel:"inicial",ico:"◈"},
+      {label:"Mi OJT",panel:"ojt",ico:"◎"},
+      {label:"Formaciones continuas",panel:"continua",ico:"↻"},
+      {label:"Preturnos",panel:"preturnos",ico:"▷"}
+    ]},
+    {sec:"Mis resultados",items:[
+      {label:"Mis compromisos",panel:"compromisos",ico:"◉",badge:"1",bt:"a"},
+      {label:"Mis calificaciones",panel:"calificaciones",ico:"◇"},
+      {label:"Retroalimentaciones",panel:"retroalimentaciones",ico:"▶"}
+    ]}
+  ],
+  formador:[
+    {sec:"Mis grupos",items:[
+      {label:"Inicio",panel:"inicio",ico:"⊞"},
+      {label:"Formación inicial",panel:"inicial",ico:"◈",badge:"1",bt:""},
+      {label:"OJT activo",panel:"ojt",ico:"◎",badge:"!",bt:""},
+      {label:"Formación continua",panel:"continua",ico:"↻",badge:"1",bt:"a"},
+      {label:"Preturnos",panel:"preturnos",ico:"▷"}
+    ]},
+    {sec:"Herramientas",items:[
+      {label:"Evaluaciones y encuestas",panel:"evaluaciones",ico:"◉"},
+      {label:"Agenda",panel:"agenda",ico:"▷"},
+      {label:"Biblioteca de actividades",panel:"biblioteca",ico:"⊟"},
+      {label:"Mis grupos — tablero",panel:"tablero",ico:"⊞"}
+    ]}
+  ],
+  analista:[
+    {sec:"Calidad",items:[
+      {label:"Inicio",panel:"inicio",ico:"⊞"},
+      {label:"OJT — Monitoreos",panel:"ojt",ico:"◎",badge:"4",bt:"a"},
+      {label:"Aplicabilidad K3",panel:"k3",ico:"◇",badge:"1",bt:""},
+      {label:"Formaciones — vista",panel:"formaciones",ico:"↻"}
+    ]},
+    {sec:"Reportes",items:[
+      {label:"Tablero de resultados",panel:"tablero",ico:"⊞"},
+      {label:"Mis actividades",panel:"actividades",ico:"▦"}
+    ]}
+  ],
+  supervisor:[
+    {sec:"Mi equipo",items:[
+      {label:"Inicio",panel:"inicio",ico:"⊞"},
+      {label:"Mi equipo OJT",panel:"ojt",ico:"◎",badge:"1",bt:""},
+      {label:"Formaciones programadas",panel:"formaciones",ico:"↻"}
+    ]},
+    {sec:"Gestión",items:[
+      {label:"Mis retroalimentaciones",panel:"retros",ico:"▶"},
+      {label:"Compromisos de agentes",panel:"compromisos",ico:"◉"},
+      {label:"Tablero de resultados",panel:"tablero",ico:"⊞"}
+    ]}
+  ],
+  lider:[
+    {sec:"Gestión de formación",items:[
+      {label:"Inicio",panel:"inicio",ico:"⊞"},
+      {label:"Grupos activos",panel:"grupos",ico:"◈",badge:"5",bt:"t"},
+      {label:"Formación inicial",panel:"inicial",ico:"◈"},
+      {label:"OJT",panel:"ojt",ico:"◎"},
+      {label:"Formación continua",panel:"continua",ico:"↻",badge:"1",bt:"a"},
+      {label:"Preturnos",panel:"preturnos",ico:"▷"}
+    ]},
+    {sec:"Control y seguimiento",items:[
+      {label:"Retiros",panel:"retiros",ico:"⚠",badge:"1",bt:""},
+      {label:"Planificador mensual",panel:"planificador",ico:"▦"},
+      {label:"Dashboard KPIs del área",panel:"dashboard",ico:"⊞"},
+      {label:"SLAs del área",panel:"slas",ico:"◉"}
+    ]}
+  ],
+  jefe_fc:[
+    {sec:"Visión global",items:[
+      {label:"Inicio",panel:"inicio",ico:"⊞"},
+      {label:"Consolidado cuentas",panel:"consolidado",ico:"⊞"},
+      {label:"Alertas escaladas",panel:"alertas",ico:"⚠",badge:"3",bt:""}
+    ]},
+    {sec:"Permisos exclusivos",items:[
+      {label:"Acciones auditables",panel:"auditables",ico:"◉",badge:"1",bt:"a"},
+      {label:"Log de auditoría",panel:"log",ico:"▦"},
+      {label:"Reportes transversales",panel:"reportes",ico:"◇"}
+    ]},
+    {sec:"Líder + (heredado)",items:[
+      {label:"Grupos y OJT",panel:"grupos",ico:"◈"},
+      {label:"Formación continua",panel:"continua",ico:"↻"},
+      {label:"Retiros",panel:"retiros",ico:"⚠"},
+      {label:"Dashboard KPIs",panel:"dashboard",ico:"⊞"}
+    ]}
+  ],
+  jefe_ops:[
+    {sec:"Mi cuenta",items:[
+      {label:"Inicio",panel:"inicio",ico:"⊞"},
+      {label:"Tablero formación inicial",panel:"inicial",ico:"◈"},
+      {label:"Tablero OJT",panel:"ojt",ico:"◎"},
+      {label:"Tablero formación continua",panel:"continua",ico:"↻"}
+    ]},
+    {sec:"Acciones",items:[
+      {label:"Actas por firmar",panel:"actas",ico:"◉",badge:"1",bt:""},
+      {label:"Asignar supervisores",panel:"supervisores",ico:"▶"},
+      {label:"Informe gerencial",panel:"informe",ico:"◇"}
+    ]}
+  ],
+  admin:[
+    {sec:"Plataforma",items:[
+      {label:"Inicio",panel:"inicio",ico:"⊞"},
+      {label:"Gestión de cuentas",panel:"cuentas",ico:"⊞",badge:"2",bt:"t"},
+      {label:"Usuarios y perfiles",panel:"usuarios",ico:"◈"},
+      {label:"Implementaciones",panel:"impl",ico:"▶",badge:"2",bt:"a"},
+      {label:"Desimplementaciones",panel:"desimpl",ico:"⚠",badge:"1",bt:""}
+    ]},
+    {sec:"Seguridad y control",items:[
+      {label:"Log de auditoría",panel:"log",ico:"◉"},
+      {label:"Permisos por rol",panel:"permisos",ico:"▦"},
+      {label:"Repositorio archivo",panel:"repo",ico:"◇"},
+      {label:"Configuración general",panel:"config",ico:"⊟"}
+    ]}
+  ]
+};
+
+function doLogin(){
+  const sel=document.getElementById("login-user").value;
+  if(!sel){alert("Selecciona un usuario");return;}
+  const u=ROLES[sel];
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("app").classList.add("visible");
+  document.getElementById("tb-ini").textContent=u.initials;
+  document.getElementById("tb-av").style.background=u.color;
+  document.getElementById("tb-nm").textContent=u.name;
+  document.getElementById("tb-rl").textContent=u.role;
+  document.getElementById("alert-dot").style.display=u.alerts?"block":"none";
+  buildSidebar(sel);
+  showView(sel);
+}
+function doLogout(){
+  document.getElementById("login-screen").style.display="flex";
+  document.getElementById("app").classList.remove("visible");
+}
+function buildSidebar(role){
+  const secs=SIDEBARS[role];
+  const sb=document.getElementById("sidebar");
+  sb.innerHTML="";
+  secs.forEach(sec=>{
+    const d=document.createElement("div");d.className="sb-sec";
+    d.innerHTML=`<div class="sb-lbl">${sec.sec}</div>`;
+    sec.items.forEach((item,i)=>{
+      const n=document.createElement("div");
+      n.className="nav"+(i===0?" on":"");n.dataset.panel=item.panel;n.dataset.role=role;
+      const badge=item.badge?`<span class="nbadge ${item.bt||""}">${item.badge}</span>`:"";
+      n.innerHTML=`<span class="nav-ico">${item.ico}</span>${item.label}${badge}`;
+      n.onclick=function(){
+        document.querySelectorAll(".nav").forEach(x=>x.classList.remove("on"));
+        this.classList.add("on");
+        const pid=`${role}-${this.dataset.panel}`;
+        const fb=`${role}-inicio`;
+        document.querySelectorAll(`#view-${role} .panel`).forEach(p=>p.classList.remove("on"));
+        const t=document.getElementById(pid)||document.getElementById(fb);
+        if(t)t.classList.add("on");
+        document.getElementById("tb-mod").textContent=item.label;
+      };
+      d.appendChild(n);
+    });
+    sb.appendChild(d);
+  });
+}
+function showView(role){
+  document.querySelectorAll(".role-view").forEach(v=>v.classList.remove("on"));
+  const v=document.getElementById("view-"+role);
+  if(v)v.classList.add("on");
+  document.querySelectorAll(`#view-${role} .panel`).forEach((p,i)=>{if(i===0)p.classList.add("on");});
+}
+</script>
+</body>
+</html>

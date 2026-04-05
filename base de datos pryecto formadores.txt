@@ -1,0 +1,3907 @@
+DROP DATABASE IF EXISTS formacion_db;
+CREATE DATABASE formacion_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE formacion_db;
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- =========================
+-- TABLAS MAESTRAS
+-- ========================
+
+-- Roles del sistema
+CREATE TABLE roles (
+    id_rol INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Usuarios del sistema
+-- Incluye identificador único para generación de QR
+CREATE TABLE usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_completo VARCHAR(150) NOT NULL,
+    correo VARCHAR(150) NOT NULL UNIQUE,
+    clave_hash VARCHAR(255) NOT NULL,
+    id_rol INT NOT NULL,
+    codigo_qr_unico CHAR(36) NOT NULL UNIQUE COMMENT 'Identificador único para QR del usuario',
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_usuarios_rol
+        FOREIGN KEY (id_rol) REFERENCES roles(id_rol)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- Campañas / CECO
+CREATE TABLE campanas (
+    id_campana INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    ceco VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(255) NULL,
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_campana_ceco (nombre, ceco)
+) ENGINE=InnoDB;
+
+-- HC por campaña
+CREATE TABLE hc (
+    id_hc INT AUTO_INCREMENT PRIMARY KEY,
+    codigo_hc VARCHAR(50) NOT NULL UNIQUE,
+    descripcion VARCHAR(150) NULL,
+    id_campana INT NULL,
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_hc_campana
+        FOREIGN KEY (id_campana) REFERENCES campanas(id_campana)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Tipo de actividad / formación
+CREATE TABLE tipo_actividad (
+    id_tipo_actividad INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    descripcion VARCHAR(255) NULL,
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Público objetivo (antes dirigido)
+CREATE TABLE publico_objetivo (
+    id_publico_objetivo INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    descripcion VARCHAR(255) NULL,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Motivos de lista naranja
+CREATE TABLE motivo_lista_naranja (
+    id_motivo INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL UNIQUE,
+    descripcion TEXT NULL,
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Catálogo de certificaciones
+CREATE TABLE certificaciones (
+    id_certificacion INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL UNIQUE,
+    descripcion TEXT NULL,
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Encuestas con 10 preguntas y observación
+CREATE TABLE encuestas (
+    id_encuesta INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL UNIQUE,
+    descripcion TEXT NULL,
+    pregunta1 TEXT NULL,
+    pregunta2 TEXT NULL,
+    pregunta3 TEXT NULL,
+    pregunta4 TEXT NULL,
+    pregunta5 TEXT NULL,
+    pregunta6 TEXT NULL,
+    pregunta7 TEXT NULL,
+    pregunta8 TEXT NULL,
+    pregunta9 TEXT NULL,
+    pregunta10 TEXT NULL,
+    observacion TEXT NULL,
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- =========================
+-- PERSONAS Y OPERACION
+-- =========================
+
+-- Participantes del proceso formativo
+CREATE TABLE personas (
+    id_persona INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_documento VARCHAR(20) NULL,
+    numero_documento VARCHAR(30) NOT NULL UNIQUE,
+    nombres VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(100) NOT NULL,
+    correo VARCHAR(150) NULL,
+    telefono VARCHAR(30) NULL,
+    fecha_ingreso DATE NULL,
+    id_campana INT NULL,
+    id_hc INT NULL,
+    codigo_qr_unico CHAR(36) NOT NULL UNIQUE COMMENT 'Identificador único para QR del participante',
+    estado VARCHAR(50) NULL,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_personas_campana
+        FOREIGN KEY (id_campana) REFERENCES campanas(id_campana)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_personas_hc
+        FOREIGN KEY (id_hc) REFERENCES hc(id_hc)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Actividades de formación
+CREATE TABLE actividades (
+    id_actividad INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(200) NOT NULL,
+    descripcion TEXT NULL,
+    id_tipo_actividad INT NOT NULL,
+    id_publico_objetivo INT NULL,
+    duracion_horas DECIMAL(5,2) NULL COMMENT 'Duración de la sesión',
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_actividades_tipo
+        FOREIGN KEY (id_tipo_actividad) REFERENCES tipo_actividad(id_tipo_actividad)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_actividades_publico_objetivo
+        FOREIGN KEY (id_publico_objetivo) REFERENCES publico_objetivo(id_publico_objetivo)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Grupo / cohorte de formación
+CREATE TABLE opr (
+    id_opr INT AUTO_INCREMENT PRIMARY KEY,
+    codigo_opr VARCHAR(50) NOT NULL UNIQUE,
+    nombre VARCHAR(150) NOT NULL,
+    id_campana INT NULL,
+    fecha_inicio DATE NULL,
+    fecha_fin DATE NULL,
+    estado VARCHAR(50) NULL,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_opr_campana
+        FOREIGN KEY (id_campana) REFERENCES campanas(id_campana)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Relación de formadores asignados a OPR
+CREATE TABLE formador_asignado (
+    id_formador_asignado INT AUTO_INCREMENT PRIMARY KEY,
+    id_opr INT NOT NULL,
+    id_usuario INT NOT NULL,
+    fecha_asignacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    rol_formador VARCHAR(100) NULL,
+    CONSTRAINT fk_formador_asignado_opr
+        FOREIGN KEY (id_opr) REFERENCES opr(id_opr)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_formador_asignado_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    UNIQUE KEY uk_opr_formador (id_opr, id_usuario)
+) ENGINE=InnoDB;
+
+-- =========================
+-- MAN (ANALISIS DE NECESIDAD)
+-- =========================
+
+-- MAN alimenta ACTIVIDAD y PLANIFICADOR
+CREATE TABLE man (
+    id_man INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(50) NOT NULL UNIQUE,
+    fecha_solicitud DATE NOT NULL,
+    id_campana INT NULL,
+    solicitado_por VARCHAR(150) NULL,
+    elaborado_por VARCHAR(150) NULL,
+    tema_tipologia VARCHAR(200) NULL,
+    analisis TEXT NULL,
+    objetivo_actividad_formativa TEXT NULL,
+    causa_raiz_general TEXT NULL,
+    objetivo_formacion TEXT NULL,
+    metodo_analisis VARCHAR(100) NULL,
+    id_tipo_actividad INT NULL,
+    id_publico_objetivo INT NULL,
+    otro_tipo_actividad VARCHAR(150) NULL,
+    tipo_formacion VARCHAR(100) NULL,
+    metodologia VARCHAR(100) NULL,
+    disponibilidad_sala VARCHAR(100) NULL,
+    fecha_inicio DATE NULL,
+    fecha_fin DATE NULL,
+    sala_asignada VARCHAR(100) NULL,
+    estado VARCHAR(50) NULL,
+    creado_por INT NULL,
+
+    -- Obligatorio: actividad asociada al MAN
+    id_actividad INT NOT NULL,
+
+    -- Campos para alimentar pensum
+    nombre_del_pensum VARCHAR(150) NULL COMMENT 'Nombre del pensum tomado desde MAN',
+    objetivo_del_pensum TEXT NULL COMMENT 'Objetivo del pensum tomado desde MAN',
+
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_man_campana
+        FOREIGN KEY (id_campana) REFERENCES campanas(id_campana)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_man_tipo_actividad
+        FOREIGN KEY (id_tipo_actividad) REFERENCES tipo_actividad(id_tipo_actividad)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_man_publico_objetivo
+        FOREIGN KEY (id_publico_objetivo) REFERENCES publico_objetivo(id_publico_objetivo)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_man_creado_por
+        FOREIGN KEY (creado_por) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_man_actividad
+        FOREIGN KEY (id_actividad) REFERENCES actividades(id_actividad)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    -- Esta combinación permite validar que planificador use
+    -- la misma actividad definida en el MAN
+    UNIQUE KEY uk_man_id_man_id_actividad (id_man, id_actividad)
+) ENGINE=InnoDB;
+
+-- Indicadores del MAN
+CREATE TABLE man_indicadores (
+    id_man_indicador INT AUTO_INCREMENT PRIMARY KEY,
+    id_man INT NOT NULL,
+    nombre_indicador VARCHAR(150) NOT NULL,
+    meta DECIMAL(10,2) NULL,
+    media DECIMAL(10,2) NULL,
+    indicador_publico_objetivo DECIMAL(10,2) NULL,
+    brecha DECIMAL(10,2) NULL,
+    periodo VARCHAR(50) NULL,
+    CONSTRAINT fk_man_indicadores_man
+        FOREIGN KEY (id_man) REFERENCES man(id_man)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Pareto del MAN
+CREATE TABLE man_pareto (
+    id_man_pareto INT AUTO_INCREMENT PRIMARY KEY,
+    id_man INT NOT NULL,
+    item VARCHAR(200) NOT NULL,
+    cantidad INT NOT NULL,
+    porcentaje DECIMAL(8,2) NULL,
+    porcentaje_acumulado DECIMAL(8,2) NULL,
+    orden INT NULL,
+    CONSTRAINT fk_man_pareto_man
+        FOREIGN KEY (id_man) REFERENCES man(id_man)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Categorías de espina de pescado
+CREATE TABLE man_espina_categoria (
+    id_categoria INT AUTO_INCREMENT PRIMARY KEY,
+    id_man INT NOT NULL,
+    nombre_categoria VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_man_espina_categoria_man
+        FOREIGN KEY (id_man) REFERENCES man(id_man)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Causas por categoría
+CREATE TABLE man_espina_causa (
+    id_causa INT AUTO_INCREMENT PRIMARY KEY,
+    id_categoria INT NOT NULL,
+    descripcion TEXT NOT NULL,
+    CONSTRAINT fk_man_espina_causa_categoria
+        FOREIGN KEY (id_categoria) REFERENCES man_espina_categoria(id_categoria)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 5 porqués
+CREATE TABLE man_5_porques (
+    id_man_5_porques INT AUTO_INCREMENT PRIMARY KEY,
+    id_man INT NOT NULL,
+    nivel INT NOT NULL,
+    pregunta VARCHAR(255) NULL,
+    respuesta TEXT NULL,
+    CONSTRAINT fk_man_5_porques_man
+        FOREIGN KEY (id_man) REFERENCES man(id_man)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT chk_man_5_porques_nivel CHECK (nivel BETWEEN 1 AND 5)
+) ENGINE=InnoDB;
+
+-- Formadores asociados a MAN
+CREATE TABLE man_formadores (
+    id_man_formador INT AUTO_INCREMENT PRIMARY KEY,
+    id_man INT NOT NULL,
+    id_usuario INT NOT NULL,
+    CONSTRAINT fk_man_formadores_man
+        FOREIGN KEY (id_man) REFERENCES man(id_man)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_man_formadores_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    UNIQUE KEY uk_man_formador (id_man, id_usuario)
+) ENGINE=InnoDB;
+
+-- =========================
+-- PLANIFICADOR
+-- =========================
+
+-- PLANIFICADOR se alimenta de MAN y ACTIVIDADES
+-- y valida que la actividad usada sea exactamente
+-- la misma asociada al MAN
+CREATE TABLE planificador (
+    id_planificador INT AUTO_INCREMENT PRIMARY KEY,
+    id_man INT NOT NULL,
+    id_actividad INT NOT NULL,
+    id_campana INT NULL,
+    id_opr INT NULL,
+    fecha_inicio DATETIME NOT NULL,
+    fecha_fin DATETIME NOT NULL,
+    metodologia VARCHAR(100) NULL,
+    sala VARCHAR(100) NULL,
+    cupo INT NULL,
+    estado VARCHAR(50) NULL,
+    creado_por INT NULL,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    -- Relación compuesta: garantiza que la actividad del planificador
+    -- sea la misma actividad asociada al MAN
+    CONSTRAINT fk_planificador_man_actividad
+        FOREIGN KEY (id_man, id_actividad) REFERENCES man (id_man, id_actividad)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    -- Relación directa con actividad para consultas e integridad
+    CONSTRAINT fk_planificador_actividad
+        FOREIGN KEY (id_actividad) REFERENCES actividades(id_actividad)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_planificador_campana
+        FOREIGN KEY (id_campana) REFERENCES campanas(id_campana)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_planificador_opr
+        FOREIGN KEY (id_opr) REFERENCES opr(id_opr)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_planificador_creado_por
+        FOREIGN KEY (creado_por) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- =========================
+-- PENSUM
+-- =========================
+
+-- Pensum toma datos desde MAN y ACTIVIDADES
+CREATE TABLE pensum (
+    id_pensum INT AUTO_INCREMENT PRIMARY KEY,
+    id_man INT NOT NULL COMMENT 'MAN del cual se origina el pensum',
+    id_actividad_base INT NULL COMMENT 'Actividad base usada para tomar la duración de la sesión',
+    nombre_del_pensum VARCHAR(150) NOT NULL COMMENT 'Tomado desde MAN',
+    objetivo_del_pensum TEXT NULL COMMENT 'Tomado desde MAN',
+    id_publico_objetivo INT NULL COMMENT 'Tomado desde MAN',
+    duracion_de_la_sesion DECIMAL(5,2) NULL COMMENT 'Tomada desde ACTIVIDADES',
+    unidad_duracion_sesion VARCHAR(20) NOT NULL DEFAULT 'HORAS' COMMENT 'Define si la duracion fue registrada en MINUTOS o HORAS',
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pensum_man
+        FOREIGN KEY (id_man) REFERENCES man(id_man)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_pensum_publico_objetivo
+        FOREIGN KEY (id_publico_objetivo) REFERENCES publico_objetivo(id_publico_objetivo)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_pensum_actividad_base
+        FOREIGN KEY (id_actividad_base) REFERENCES actividades(id_actividad)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Detalle del pensum
+CREATE TABLE pensum_detalle (
+    id_pensum_detalle INT AUTO_INCREMENT PRIMARY KEY,
+    id_pensum INT NOT NULL,
+    dia_de_capacitacion VARCHAR(50) NOT NULL,
+    tema VARCHAR(200) NOT NULL,
+    contenido TEXT NULL,
+    top_tipologias VARCHAR(255) NULL,
+    duracion DECIMAL(5,2) NULL,
+    objetivo TEXT NULL,
+    descripcion_de_la_actividad TEXT NULL,
+    rutas TEXT NULL,
+    CONSTRAINT fk_pensum_detalle_pensum
+        FOREIGN KEY (id_pensum) REFERENCES pensum(id_pensum)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Relación de pensum con OPR
+CREATE TABLE opr_pensum (
+    id_opr_pensum INT AUTO_INCREMENT PRIMARY KEY,
+    id_opr INT NOT NULL,
+    id_pensum INT NOT NULL,
+    fecha_asignacion DATE NOT NULL,
+    CONSTRAINT fk_opr_pensum_opr
+        FOREIGN KEY (id_opr) REFERENCES opr(id_opr)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_opr_pensum_pensum
+        FOREIGN KEY (id_pensum) REFERENCES pensum(id_pensum)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    UNIQUE KEY uk_opr_pensum (id_opr, id_pensum)
+) ENGINE=InnoDB;
+
+-- =========================
+-- SEGUIMIENTO
+-- =========================
+
+-- Asistencia tradicional
+CREATE TABLE wave_formador (
+    id_wave_formador INT AUTO_INCREMENT PRIMARY KEY,
+    id_persona INT NOT NULL,
+    id_opr INT NOT NULL,
+    id_actividad INT NOT NULL,
+    fecha DATE NOT NULL,
+    asistencia TINYINT(1) NOT NULL,
+    observacion TEXT NULL,
+    CONSTRAINT fk_wave_formador_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_wave_formador_opr
+        FOREIGN KEY (id_opr) REFERENCES opr(id_opr)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_wave_formador_actividad
+        FOREIGN KEY (id_actividad) REFERENCES actividades(id_actividad)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- Asistencia validada por IA contra QR
+CREATE TABLE asistencia_ia (
+    id_asistencia_ia INT AUTO_INCREMENT PRIMARY KEY,
+    id_planificador INT NOT NULL COMMENT 'Sesión analizada por IA',
+    id_persona INT NULL COMMENT 'Participante esperado o analizado',
+    codigo_qr_leido CHAR(36) NULL COMMENT 'Código QR leído en la sesión',
+    asistencia_esperada TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'Indica si la persona estaba en la lista esperada',
+    asistencia_marcada_qr TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'Indica si la asistencia fue marcada vía QR',
+    resultado_contraste VARCHAR(50) NOT NULL COMMENT 'ASISTIO, NO_ASISTIO, NO_ESPERADO, INCONSISTENTE',
+    observacion_ia TEXT NULL COMMENT 'Observaciones del agente de IA',
+    fecha_analisis DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_asistencia_ia_planificador
+        FOREIGN KEY (id_planificador) REFERENCES planificador(id_planificador)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_asistencia_ia_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Lista naranja
+CREATE TABLE lista_naranja (
+    id_lista_naranja INT AUTO_INCREMENT PRIMARY KEY,
+    id_persona INT NOT NULL,
+    id_opr INT NULL,
+    id_motivo INT NOT NULL,
+    fecha_reporte DATE NOT NULL,
+    nivel_riesgo VARCHAR(50) NULL,
+    observacion TEXT NULL,
+    estado VARCHAR(50) NULL,
+    CONSTRAINT fk_lista_naranja_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_lista_naranja_opr
+        FOREIGN KEY (id_opr) REFERENCES opr(id_opr)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_lista_naranja_motivo
+        FOREIGN KEY (id_motivo) REFERENCES motivo_lista_naranja(id_motivo)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- Certificaciones por persona
+CREATE TABLE persona_certificacion (
+    id_persona_certificacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_persona INT NOT NULL,
+    id_certificacion INT NOT NULL,
+    fecha_certificacion DATE NULL,
+    resultado VARCHAR(50) NULL,
+    puntaje DECIMAL(5,2) NULL,
+    observacion TEXT NULL,
+    CONSTRAINT fk_persona_certificacion_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_persona_certificacion_certificacion
+        FOREIGN KEY (id_certificacion) REFERENCES certificaciones(id_certificacion)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    UNIQUE KEY uk_persona_certificacion (id_persona, id_certificacion)
+) ENGINE=InnoDB;
+
+CREATE TABLE persona_encuesta (
+    id_persona_encuesta INT AUTO_INCREMENT PRIMARY KEY,
+    id_persona INT NOT NULL,
+    id_encuesta INT NOT NULL,
+    fecha_respuesta DATE NULL,
+    puntaje DECIMAL(5,2) NULL,
+    observacion TEXT NULL,
+    CONSTRAINT fk_persona_encuesta_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_persona_encuesta_encuesta
+        FOREIGN KEY (id_encuesta) REFERENCES encuestas(id_encuesta)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE persona_encuesta_detalle (
+    id_persona_encuesta_detalle INT AUTO_INCREMENT PRIMARY KEY,
+    id_persona_encuesta INT NOT NULL,
+    numero_pregunta TINYINT NOT NULL,
+    respuesta TEXT NULL,
+    puntaje_respuesta DECIMAL(5,2) NULL,
+    CONSTRAINT fk_persona_encuesta_detalle_cabecera
+        FOREIGN KEY (id_persona_encuesta) REFERENCES persona_encuesta(id_persona_encuesta)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT chk_numero_pregunta CHECK (numero_pregunta BETWEEN 1 AND 10),
+    UNIQUE KEY uk_persona_encuesta_pregunta (id_persona_encuesta, numero_pregunta)
+) ENGINE=InnoDB;
+CREATE TABLE sesion_virtual (
+    id_sesion_virtual INT AUTO_INCREMENT PRIMARY KEY,
+    id_planificador INT NOT NULL,
+    teams_meeting_id VARCHAR(150) NULL,
+    teams_call_id VARCHAR(150) NULL,
+    teams_call_state VARCHAR(50) NULL,
+    teams_join_url TEXT NULL COMMENT 'URL manual de Teams capturada desde el modulo de asistencia del formador',
+    teams_bot_participant_id VARCHAR(150) NULL,
+    qr_token VARCHAR(255) NOT NULL,
+    qr_expira_en DATETIME NOT NULL,
+    estado_sesion VARCHAR(50) NOT NULL DEFAULT 'programada',
+    creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_sesion_virtual_qr (qr_token),
+    CONSTRAINT fk_sesion_virtual_planificador
+        FOREIGN KEY (id_planificador) REFERENCES planificador(id_planificador)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE sesion_virtual_qr (
+    id_sesion_virtual_qr INT AUTO_INCREMENT PRIMARY KEY,
+    id_sesion_virtual INT NOT NULL,
+    tipo_qr VARCHAR(30) NOT NULL,
+    qr_token VARCHAR(255) NOT NULL,
+    public_url VARCHAR(500) NULL COMMENT 'URL publica del formulario QR que abre el asistente',
+    activa_desde DATETIME NOT NULL,
+    expira_en DATETIME NOT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'PROGRAMADO',
+    creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_sesion_virtual_qr_tipo (id_sesion_virtual, tipo_qr),
+    UNIQUE KEY uq_sesion_virtual_qr_token (qr_token),
+    KEY idx_sesion_virtual_qr_ventana (activa_desde, expira_en, estado),
+    CONSTRAINT fk_sesion_virtual_qr_sesion
+        FOREIGN KEY (id_sesion_virtual) REFERENCES sesion_virtual(id_sesion_virtual)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE asistencia_scan (
+    id_asistencia_scan INT AUTO_INCREMENT PRIMARY KEY,
+    id_sesion_virtual INT NULL,
+    id_sesion_virtual_qr INT NULL,
+    qr_token_capturado VARCHAR(255) NOT NULL,
+    tipo_qr VARCHAR(30) NULL,
+    id_persona INT NULL,
+    nombre_capturado VARCHAR(150) NOT NULL,
+    cedula_capturada VARCHAR(30) NOT NULL,
+    id_campana_capturada INT NULL,
+    estado_validacion VARCHAR(50) NOT NULL,
+    origen VARCHAR(30) NOT NULL DEFAULT 'qr_form',
+    ip_origen VARCHAR(45) NULL,
+    user_agent VARCHAR(255) NULL,
+    fecha_scan DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    observacion VARCHAR(255) NULL,
+    CONSTRAINT fk_asistencia_scan_sesion
+        FOREIGN KEY (id_sesion_virtual) REFERENCES sesion_virtual(id_sesion_virtual)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_asistencia_scan_sesion_qr
+        FOREIGN KEY (id_sesion_virtual_qr) REFERENCES sesion_virtual_qr(id_sesion_virtual_qr)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_asistencia_scan_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_asistencia_scan_campana
+        FOREIGN KEY (id_campana_capturada) REFERENCES campanas(id_campana)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    KEY idx_asistencia_scan_estado (estado_validacion, fecha_scan),
+    KEY idx_asistencia_scan_sesion_qr (id_sesion_virtual_qr, fecha_scan)
+) ENGINE=InnoDB;
+
+CREATE TABLE teams_participante_live (
+    id_teams_participante_live INT AUTO_INCREMENT PRIMARY KEY,
+    id_sesion_virtual INT NOT NULL,
+    teams_participant_id VARCHAR(150) NOT NULL,
+    display_name VARCHAR(150) NULL,
+    email VARCHAR(150) NULL,
+    aad_object_id VARCHAR(150) NULL,
+    estado_participacion VARCHAR(50) NOT NULL,
+    fecha_join DATETIME NULL,
+    fecha_leave DATETIME NULL,
+    autorizado TINYINT(1) NOT NULL DEFAULT 0,
+    razon_validacion VARCHAR(255) NULL,
+    CONSTRAINT fk_teams_live_sesion
+        FOREIGN KEY (id_sesion_virtual) REFERENCES sesion_virtual(id_sesion_virtual)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE teams_moderacion_log (
+    id_teams_moderacion_log INT AUTO_INCREMENT PRIMARY KEY,
+    id_sesion_virtual INT NOT NULL,
+    teams_participant_id VARCHAR(150) NOT NULL,
+    accion VARCHAR(50) NOT NULL,
+    resultado VARCHAR(50) NOT NULL,
+    detalle TEXT NULL,
+    fecha_evento DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_teams_mod_log_sesion
+        FOREIGN KEY (id_sesion_virtual) REFERENCES sesion_virtual(id_sesion_virtual)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- =========================================================
+-- SQL INCREMENTAL PARA QR POR SESION / FORMACION
+-- Ejecutar en bases ya existentes si sesion_virtual y asistencia_scan
+-- fueron creadas antes de este ajuste.
+-- =========================================================
+-- Si la base antigua no tiene el campo para guardar la URL de Teams,
+-- ejecutar:
+-- ALTER TABLE sesion_virtual
+--     ADD COLUMN teams_call_id VARCHAR(150) NULL AFTER teams_meeting_id,
+--     ADD COLUMN teams_call_state VARCHAR(50) NULL AFTER teams_call_id,
+--     ADD COLUMN teams_join_url TEXT NULL AFTER teams_meeting_id;
+--     ADD COLUMN teams_bot_participant_id VARCHAR(150) NULL AFTER teams_join_url;
+--
+-- Si la base antigua no tiene el enlace publico que abre el QR,
+-- ejecutar:
+-- ALTER TABLE sesion_virtual_qr
+--     ADD COLUMN public_url VARCHAR(500) NULL AFTER qr_token;
+--
+-- CREATE TABLE sesion_virtual_qr (
+--     id_sesion_virtual_qr INT AUTO_INCREMENT PRIMARY KEY,
+--     id_sesion_virtual INT NOT NULL,
+--     tipo_qr VARCHAR(30) NOT NULL,
+--     qr_token VARCHAR(255) NOT NULL,
+--     public_url VARCHAR(500) NULL COMMENT 'URL publica del formulario QR que abre el asistente',
+--     activa_desde DATETIME NOT NULL,
+--     expira_en DATETIME NOT NULL,
+--     estado VARCHAR(30) NOT NULL DEFAULT 'PROGRAMADO',
+--     creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     actualizado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+--     UNIQUE KEY uq_sesion_virtual_qr_tipo (id_sesion_virtual, tipo_qr),
+--     UNIQUE KEY uq_sesion_virtual_qr_token (qr_token),
+--     KEY idx_sesion_virtual_qr_ventana (activa_desde, expira_en, estado),
+--     CONSTRAINT fk_sesion_virtual_qr_sesion
+--         FOREIGN KEY (id_sesion_virtual) REFERENCES sesion_virtual(id_sesion_virtual)
+--         ON UPDATE CASCADE
+--         ON DELETE CASCADE
+-- ) ENGINE=InnoDB;
+--
+-- ALTER TABLE asistencia_scan
+--     MODIFY COLUMN id_sesion_virtual INT NULL,
+--     ADD COLUMN id_sesion_virtual_qr INT NULL AFTER id_sesion_virtual,
+--     ADD COLUMN qr_token_capturado VARCHAR(255) NOT NULL AFTER id_sesion_virtual_qr,
+--     ADD COLUMN tipo_qr VARCHAR(30) NULL AFTER qr_token_capturado,
+--     ADD CONSTRAINT fk_asistencia_scan_sesion_qr
+--         FOREIGN KEY (id_sesion_virtual_qr) REFERENCES sesion_virtual_qr(id_sesion_virtual_qr)
+--         ON UPDATE CASCADE
+--         ON DELETE SET NULL,
+--     ADD KEY idx_asistencia_scan_estado (estado_validacion, fecha_scan),
+--     ADD KEY idx_asistencia_scan_sesion_qr (id_sesion_virtual_qr, fecha_scan);
+
+-- =========================================================
+-- VIEWS Y STORED PROCEDURES PARA MYSQL EXTERNO
+-- Agregar este bloque al final de la estructura base.
+-- =========================================================
+
+-- =========================================================
+-- TABLAS COMPLEMENTARIAS REQUERIDAS POR EL BACKEND MIGRADO
+-- Estas tablas no existen en la estructura base original,
+-- pero son necesarias para que las VIEW y SP funcionen.
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS usuario_permisos (
+    id_usuario_permiso INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    permiso VARCHAR(150) NOT NULL,
+    habilitado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_usuario_permisos_usuario
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    UNIQUE KEY uq_usuario_permiso (id_usuario, permiso)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS opr_participantes (
+    id_opr_participante INT AUTO_INCREMENT PRIMARY KEY,
+    id_opr INT NOT NULL,
+    id_persona INT NOT NULL,
+    fecha_asignacion DATETIME NOT NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'ACTIVO',
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_opr_participantes_opr
+        FOREIGN KEY (id_opr) REFERENCES opr(id_opr)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_opr_participantes_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    UNIQUE KEY uk_opr_participante (id_opr, id_persona)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS retroalimentaciones (
+    id_retroalimentacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_persona INT NOT NULL,
+    creado_por INT NOT NULL,
+    origen VARCHAR(50) NOT NULL,
+    titulo VARCHAR(150) NOT NULL,
+    fortalezas TEXT NULL,
+    oportunidades TEXT NULL,
+    plan_accion TEXT NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'ABIERTA',
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_retroalimentacion_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_retroalimentacion_creador
+        FOREIGN KEY (creado_por) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS compromisos (
+    id_compromiso INT AUTO_INCREMENT PRIMARY KEY,
+    id_retroalimentacion INT NOT NULL,
+    id_persona INT NOT NULL,
+    id_usuario_responsable INT NULL,
+    descripcion TEXT NOT NULL,
+    fecha_compromiso DATE NOT NULL,
+    fecha_vencimiento DATE NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE',
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_compromiso_retroalimentacion
+        FOREIGN KEY (id_retroalimentacion) REFERENCES retroalimentaciones(id_retroalimentacion)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_compromiso_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_compromiso_usuario
+        FOREIGN KEY (id_usuario_responsable) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS monitoreos_calidad (
+    id_monitoreo_calidad INT AUTO_INCREMENT PRIMARY KEY,
+    id_persona INT NOT NULL,
+    id_analista INT NOT NULL,
+    call_id VARCHAR(100) NULL,
+    criterio VARCHAR(150) NOT NULL,
+    puntaje DECIMAL(5, 2) NULL,
+    hallazgo TEXT NULL,
+    recomendacion TEXT NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'REGISTRADO',
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_monitoreo_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_monitoreo_analista
+        FOREIGN KEY (id_analista) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS ojt_seguimientos (
+    id_ojt_seguimiento INT AUTO_INCREMENT PRIMARY KEY,
+    id_persona INT NOT NULL,
+    id_opr INT NOT NULL,
+    dia INT NOT NULL,
+    aht VARCHAR(20) NULL,
+    calidad DECIMAL(5, 2) NULL,
+    csat DECIMAL(5, 2) NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'EN_CURSO',
+    observacion TEXT NULL,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_ojt_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_ojt_opr
+        FOREIGN KEY (id_opr) REFERENCES opr(id_opr)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS preturnos (
+    id_preturno INT AUTO_INCREMENT PRIMARY KEY,
+    id_opr INT NOT NULL,
+    creado_por INT NOT NULL,
+    tema VARCHAR(150) NOT NULL,
+    fecha DATE NOT NULL,
+    preguntas INT NOT NULL DEFAULT 0,
+    nota_promedio DECIMAL(5, 2) NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'PUBLICADO',
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_preturno_opr
+        FOREIGN KEY (id_opr) REFERENCES opr(id_opr)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_preturno_creador
+        FOREIGN KEY (creado_por) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS agenda_eventos (
+    id_agenda_evento INT AUTO_INCREMENT PRIMARY KEY,
+    id_planificador INT NULL,
+    id_opr INT NULL,
+    id_responsable INT NOT NULL,
+    titulo VARCHAR(200) NOT NULL,
+    descripcion TEXT NULL,
+    fecha_inicio DATETIME NOT NULL,
+    fecha_fin DATETIME NOT NULL,
+    modalidad VARCHAR(50) NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'PROGRAMADO',
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_agenda_planificador
+        FOREIGN KEY (id_planificador) REFERENCES planificador(id_planificador)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_agenda_opr
+        FOREIGN KEY (id_opr) REFERENCES opr(id_opr)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_agenda_responsable
+        FOREIGN KEY (id_responsable) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS biblioteca_actividades (
+    id_biblioteca_actividad INT AUTO_INCREMENT PRIMARY KEY,
+    id_actividad INT NULL,
+    creado_por INT NOT NULL,
+    categoria VARCHAR(100) NOT NULL,
+    titulo VARCHAR(150) NOT NULL,
+    descripcion TEXT NULL,
+    recurso_url VARCHAR(255) NULL,
+    estado VARCHAR(50) NOT NULL DEFAULT 'ACTIVO',
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_biblioteca_actividad
+        FOREIGN KEY (id_actividad) REFERENCES actividades(id_actividad)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_biblioteca_creador
+        FOREIGN KEY (creado_por) REFERENCES usuarios(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS resultado_operacion (
+    id_resultado_operacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_persona INT NOT NULL,
+    modulo VARCHAR(100) NOT NULL,
+    indicador VARCHAR(100) NOT NULL,
+    valor_inicial DECIMAL(10, 2) NULL,
+    valor_final DECIMAL(10, 2) NULL,
+    tendencia VARCHAR(50) NULL,
+    observacion TEXT NULL,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_resultado_operacion_persona
+        FOREIGN KEY (id_persona) REFERENCES personas(id_persona)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+ALTER TABLE planificador
+    MODIFY fecha_inicio DATETIME NOT NULL,
+    MODIFY fecha_fin DATETIME NOT NULL;
+
+
+-- Indices recomendados para produccion.
+-- Ejecutar manualmente solo si todavia no existen:
+-- CREATE INDEX idx_opr_participantes_opr_estado ON opr_participantes (id_opr, estado);
+-- CREATE INDEX idx_retroalimentaciones_persona ON retroalimentaciones (id_persona, creado_por);
+-- CREATE INDEX idx_compromisos_responsable_estado ON compromisos (id_usuario_responsable, estado);
+-- CREATE INDEX idx_monitoreos_analista_fecha ON monitoreos_calidad (id_analista, fecha_creacion);
+-- CREATE INDEX idx_ojt_persona_opr ON ojt_seguimientos (id_persona, id_opr);
+-- CREATE INDEX idx_preturnos_opr_fecha ON preturnos (id_opr, fecha);
+-- CREATE INDEX idx_agenda_responsable_fecha ON agenda_eventos (id_responsable, fecha_inicio);
+-- CREATE INDEX idx_biblioteca_actividad_creador ON biblioteca_actividades (id_actividad, creado_por);
+-- CREATE INDEX idx_resultado_operacion_persona_modulo ON resultado_operacion (id_persona, modulo);
+
+DROP VIEW IF EXISTS vw_usuarios_detalle;
+CREATE VIEW vw_usuarios_detalle AS
+SELECT
+    u.id_usuario,
+    u.nombre_completo,
+    u.correo,
+    u.id_rol,
+    r.nombre AS rol_nombre,
+    u.codigo_qr_unico,
+    u.estado,
+    u.fecha_creacion
+FROM usuarios u
+INNER JOIN roles r ON r.id_rol = u.id_rol;
+
+DROP VIEW IF EXISTS vw_formador_tablero;
+CREATE VIEW vw_formador_tablero AS
+SELECT
+    fa.id_usuario,
+    u.nombre_completo AS formador,
+    o.id_opr,
+    o.codigo_opr,
+    o.nombre AS grupo,
+    c.nombre AS campana,
+    COUNT(DISTINCT op.id_persona) AS participantes,
+    COUNT(DISTINCT CASE WHEN wf.asistencia = 1 THEN wf.id_persona END) AS asistencias_marcadas,
+    COUNT(DISTINCT ojt.id_ojt_seguimiento) AS seguimientos_ojt,
+    COUNT(DISTINCT ag.id_agenda_evento) AS eventos_agenda
+FROM formador_asignado fa
+INNER JOIN usuarios u ON u.id_usuario = fa.id_usuario
+INNER JOIN opr o ON o.id_opr = fa.id_opr
+LEFT JOIN campanas c ON c.id_campana = o.id_campana
+LEFT JOIN opr_participantes op ON op.id_opr = o.id_opr
+LEFT JOIN wave_formador wf ON wf.id_opr = o.id_opr
+LEFT JOIN ojt_seguimientos ojt ON ojt.id_opr = o.id_opr
+LEFT JOIN agenda_eventos ag ON ag.id_opr = o.id_opr
+GROUP BY fa.id_usuario, u.nombre_completo, o.id_opr, o.codigo_opr, o.nombre, c.nombre;
+
+DROP VIEW IF EXISTS vw_resultados_operacion;
+CREATE VIEW vw_resultados_operacion AS
+SELECT
+    ro.id_resultado_operacion,
+    ro.id_persona,
+    CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+    ro.modulo,
+    ro.indicador,
+    ro.valor_inicial,
+    ro.valor_final,
+    ro.tendencia,
+    ro.observacion,
+    ro.fecha_creacion
+FROM resultado_operacion ro
+INNER JOIN personas p ON p.id_persona = ro.id_persona;
+
+DROP VIEW IF EXISTS vw_agenda_operativa;
+CREATE VIEW vw_agenda_operativa AS
+SELECT
+    ag.id_agenda_evento,
+    ag.id_planificador,
+    ag.id_opr,
+    ag.id_responsable,
+    ag.titulo,
+    ag.descripcion,
+    ag.fecha_inicio,
+    ag.fecha_fin,
+    ag.modalidad,
+    ag.estado,
+    o.codigo_opr,
+    o.nombre AS grupo_nombre,
+    u.nombre_completo AS responsable
+FROM agenda_eventos ag
+LEFT JOIN opr o ON o.id_opr = ag.id_opr
+INNER JOIN usuarios u ON u.id_usuario = ag.id_responsable;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS sp_usuario_create $$
+CREATE PROCEDURE sp_usuario_create(
+    IN p_nombre_completo VARCHAR(150),
+    IN p_correo VARCHAR(150),
+    IN p_clave_hash VARCHAR(255),
+    IN p_id_rol INT,
+    IN p_codigo_qr_unico CHAR(36),
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    INSERT INTO usuarios (
+        nombre_completo, correo, clave_hash, id_rol, codigo_qr_unico, estado
+    )
+    VALUES (
+        p_nombre_completo, p_correo, p_clave_hash, p_id_rol, p_codigo_qr_unico, p_estado
+    );
+
+    SELECT * FROM vw_usuarios_detalle WHERE id_usuario = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_usuario_update $$
+CREATE PROCEDURE sp_usuario_update(
+    IN p_id_usuario INT,
+    IN p_nombre_completo VARCHAR(150),
+    IN p_correo VARCHAR(150),
+    IN p_clave_hash VARCHAR(255),
+    IN p_id_rol INT,
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    UPDATE usuarios
+    SET nombre_completo = p_nombre_completo,
+        correo = p_correo,
+        clave_hash = COALESCE(NULLIF(p_clave_hash, ''), clave_hash),
+        id_rol = p_id_rol,
+        estado = p_estado
+    WHERE id_usuario = p_id_usuario;
+
+    SELECT * FROM vw_usuarios_detalle WHERE id_usuario = p_id_usuario;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_usuario_delete $$
+CREATE PROCEDURE sp_usuario_delete(IN p_id_usuario INT)
+BEGIN
+    DELETE FROM usuario_permisos WHERE id_usuario = p_id_usuario;
+    DELETE FROM usuarios WHERE id_usuario = p_id_usuario;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_campana_create $$
+CREATE PROCEDURE sp_campana_create(
+    IN p_nombre VARCHAR(150),
+    IN p_ceco VARCHAR(50),
+    IN p_descripcion VARCHAR(255),
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    INSERT INTO campanas (nombre, ceco, descripcion, estado)
+    VALUES (p_nombre, p_ceco, p_descripcion, p_estado);
+    SELECT id_campana, nombre, ceco, descripcion, estado
+    FROM campanas WHERE id_campana = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_hc_create $$
+CREATE PROCEDURE sp_hc_create(
+    IN p_codigo_hc VARCHAR(50),
+    IN p_descripcion VARCHAR(150),
+    IN p_id_campana INT,
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    INSERT INTO hc (codigo_hc, descripcion, id_campana, estado)
+    VALUES (p_codigo_hc, p_descripcion, p_id_campana, p_estado);
+    SELECT id_hc, codigo_hc, descripcion, id_campana, estado
+    FROM hc WHERE id_hc = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_tipo_actividad_create $$
+CREATE PROCEDURE sp_tipo_actividad_create(
+    IN p_nombre VARCHAR(100),
+    IN p_descripcion VARCHAR(255),
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    INSERT INTO tipo_actividad (nombre, descripcion, estado)
+    VALUES (p_nombre, p_descripcion, p_estado);
+    SELECT id_tipo_actividad, nombre, descripcion, estado
+    FROM tipo_actividad WHERE id_tipo_actividad = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_publico_objetivo_create $$
+CREATE PROCEDURE sp_publico_objetivo_create(
+    IN p_nombre VARCHAR(100),
+    IN p_descripcion VARCHAR(255)
+)
+BEGIN
+    INSERT INTO publico_objetivo (nombre, descripcion)
+    VALUES (p_nombre, p_descripcion);
+    SELECT id_publico_objetivo, nombre, descripcion
+    FROM publico_objetivo WHERE id_publico_objetivo = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_motivo_lista_naranja_create $$
+CREATE PROCEDURE sp_motivo_lista_naranja_create(
+    IN p_nombre VARCHAR(150),
+    IN p_descripcion TEXT,
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    INSERT INTO motivo_lista_naranja (nombre, descripcion, estado)
+    VALUES (p_nombre, p_descripcion, p_estado);
+    SELECT id_motivo, nombre, descripcion, estado
+    FROM motivo_lista_naranja WHERE id_motivo = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_certificacion_create $$
+CREATE PROCEDURE sp_certificacion_create(
+    IN p_nombre VARCHAR(150),
+    IN p_descripcion TEXT,
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    INSERT INTO certificaciones (nombre, descripcion, estado)
+    VALUES (p_nombre, p_descripcion, p_estado);
+    SELECT id_certificacion, nombre, descripcion, estado
+    FROM certificaciones WHERE id_certificacion = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_encuesta_create $$
+CREATE PROCEDURE sp_encuesta_create(
+    IN p_nombre VARCHAR(150),
+    IN p_descripcion TEXT,
+    IN p_pregunta1 TEXT,
+    IN p_pregunta2 TEXT,
+    IN p_pregunta3 TEXT,
+    IN p_pregunta4 TEXT,
+    IN p_pregunta5 TEXT,
+    IN p_pregunta6 TEXT,
+    IN p_pregunta7 TEXT,
+    IN p_pregunta8 TEXT,
+    IN p_pregunta9 TEXT,
+    IN p_pregunta10 TEXT,
+    IN p_observacion TEXT,
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    INSERT INTO encuestas (
+        nombre, descripcion, pregunta1, pregunta2, pregunta3, pregunta4, pregunta5,
+        pregunta6, pregunta7, pregunta8, pregunta9, pregunta10, observacion, estado
+    )
+    VALUES (
+        p_nombre, p_descripcion, p_pregunta1, p_pregunta2, p_pregunta3, p_pregunta4, p_pregunta5,
+        p_pregunta6, p_pregunta7, p_pregunta8, p_pregunta9, p_pregunta10, p_observacion, p_estado
+    );
+
+    SELECT
+        id_encuesta, nombre, descripcion, pregunta1, pregunta2, pregunta3, pregunta4, pregunta5,
+        pregunta6, pregunta7, pregunta8, pregunta9, pregunta10, observacion, estado
+    FROM encuestas
+    WHERE id_encuesta = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_persona_create $$
+CREATE PROCEDURE sp_persona_create(
+    IN p_tipo_documento VARCHAR(20),
+    IN p_numero_documento VARCHAR(30),
+    IN p_nombres VARCHAR(100),
+    IN p_apellidos VARCHAR(100),
+    IN p_correo VARCHAR(150),
+    IN p_telefono VARCHAR(30),
+    IN p_fecha_ingreso DATE,
+    IN p_id_campana INT,
+    IN p_id_hc INT,
+    IN p_codigo_qr_unico CHAR(36),
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    INSERT INTO personas (
+        tipo_documento, numero_documento, nombres, apellidos, correo, telefono,
+        fecha_ingreso, id_campana, id_hc, codigo_qr_unico, estado
+    )
+    VALUES (
+        p_tipo_documento, p_numero_documento, p_nombres, p_apellidos, p_correo, p_telefono,
+        p_fecha_ingreso, p_id_campana, p_id_hc, p_codigo_qr_unico, p_estado
+    );
+
+    SELECT
+        id_persona, tipo_documento, numero_documento, nombres, apellidos, correo, telefono,
+        fecha_ingreso, id_campana, id_hc, codigo_qr_unico, estado
+    FROM personas
+    WHERE id_persona = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_actividad_create $$
+CREATE PROCEDURE sp_actividad_create(
+    IN p_nombre VARCHAR(200),
+    IN p_descripcion TEXT,
+    IN p_id_tipo_actividad INT,
+    IN p_id_publico_objetivo INT,
+    IN p_duracion_horas DECIMAL(5, 2),
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    INSERT INTO actividades (
+        nombre, descripcion, id_tipo_actividad, id_publico_objetivo, duracion_horas, estado
+    )
+    VALUES (
+        p_nombre, p_descripcion, p_id_tipo_actividad, p_id_publico_objetivo, p_duracion_horas, p_estado
+    );
+
+    SELECT
+        id_actividad, nombre, descripcion, id_tipo_actividad, id_publico_objetivo, duracion_horas, estado
+    FROM actividades
+    WHERE id_actividad = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_create $$
+CREATE PROCEDURE sp_opr_create(
+    IN p_codigo_opr VARCHAR(50),
+    IN p_nombre VARCHAR(150),
+    IN p_id_campana INT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE,
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    INSERT INTO opr (codigo_opr, nombre, id_campana, fecha_inicio, fecha_fin, estado)
+    VALUES (p_codigo_opr, p_nombre, p_id_campana, p_fecha_inicio, p_fecha_fin, p_estado);
+
+    SELECT id_opr, codigo_opr, nombre, id_campana, fecha_inicio, fecha_fin, estado
+    FROM opr WHERE id_opr = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_participante_create $$
+CREATE PROCEDURE sp_opr_participante_create(
+    IN p_id_opr INT,
+    IN p_id_persona INT,
+    IN p_fecha_asignacion DATETIME,
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    INSERT INTO opr_participantes (id_opr, id_persona, fecha_asignacion, estado)
+    VALUES (p_id_opr, p_id_persona, p_fecha_asignacion, p_estado);
+
+    SELECT id_opr_participante, id_opr, id_persona, fecha_asignacion, estado
+    FROM opr_participantes WHERE id_opr_participante = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_formador_asignado_create $$
+CREATE PROCEDURE sp_formador_asignado_create(
+    IN p_id_opr INT,
+    IN p_id_usuario INT,
+    IN p_fecha_asignacion DATETIME,
+    IN p_rol_formador VARCHAR(100)
+)
+BEGIN
+    INSERT INTO formador_asignado (id_opr, id_usuario, fecha_asignacion, rol_formador)
+    VALUES (p_id_opr, p_id_usuario, p_fecha_asignacion, p_rol_formador);
+
+    SELECT id_formador_asignado, id_opr, id_usuario, fecha_asignacion, rol_formador
+    FROM formador_asignado WHERE id_formador_asignado = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_man_create $$
+CREATE PROCEDURE sp_man_create(
+    IN p_codigo VARCHAR(50), IN p_fecha_solicitud DATE, IN p_id_campana INT,
+    IN p_solicitado_por VARCHAR(150), IN p_elaborado_por VARCHAR(150), IN p_tema_tipologia VARCHAR(200),
+    IN p_analisis TEXT, IN p_objetivo_actividad_formativa TEXT, IN p_causa_raiz_general TEXT,
+    IN p_objetivo_formacion TEXT, IN p_metodo_analisis VARCHAR(100), IN p_id_tipo_actividad INT,
+    IN p_id_publico_objetivo INT, IN p_otro_tipo_actividad VARCHAR(150), IN p_tipo_formacion VARCHAR(100),
+    IN p_metodologia VARCHAR(100), IN p_disponibilidad_sala VARCHAR(100), IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE, IN p_sala_asignada VARCHAR(100), IN p_estado VARCHAR(50), IN p_creado_por INT,
+    IN p_id_actividad INT, IN p_nombre_del_pensum VARCHAR(150), IN p_objetivo_del_pensum TEXT
+)
+BEGIN
+    INSERT INTO man (
+        codigo, fecha_solicitud, id_campana, solicitado_por, elaborado_por, tema_tipologia,
+        analisis, objetivo_actividad_formativa, causa_raiz_general, objetivo_formacion,
+        metodo_analisis, id_tipo_actividad, id_publico_objetivo, otro_tipo_actividad,
+        tipo_formacion, metodologia, disponibilidad_sala, fecha_inicio, fecha_fin,
+        sala_asignada, estado, creado_por, id_actividad, nombre_del_pensum, objetivo_del_pensum
+    )
+    VALUES (
+        p_codigo, p_fecha_solicitud, p_id_campana, p_solicitado_por, p_elaborado_por, p_tema_tipologia,
+        p_analisis, p_objetivo_actividad_formativa, p_causa_raiz_general, p_objetivo_formacion,
+        p_metodo_analisis, p_id_tipo_actividad, p_id_publico_objetivo, p_otro_tipo_actividad,
+        p_tipo_formacion, p_metodologia, p_disponibilidad_sala, p_fecha_inicio, p_fecha_fin,
+        p_sala_asignada, p_estado, p_creado_por, p_id_actividad, p_nombre_del_pensum, p_objetivo_del_pensum
+    );
+
+    SELECT
+        id_man, codigo, fecha_solicitud, id_campana, solicitado_por, elaborado_por, tema_tipologia,
+        analisis, objetivo_actividad_formativa, causa_raiz_general, objetivo_formacion, metodo_analisis,
+        id_tipo_actividad, id_publico_objetivo, otro_tipo_actividad, tipo_formacion, metodologia,
+        disponibilidad_sala, fecha_inicio, fecha_fin, sala_asignada, estado, creado_por,
+        id_actividad, nombre_del_pensum, objetivo_del_pensum
+    FROM man WHERE id_man = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_planificador_create $$
+CREATE PROCEDURE sp_planificador_create(
+    IN p_id_man INT, IN p_id_actividad INT, IN p_id_campana INT, IN p_id_opr INT,
+    IN p_fecha_inicio DATETIME, IN p_fecha_fin DATETIME, IN p_metodologia VARCHAR(100),
+    IN p_sala VARCHAR(100), IN p_cupo INT, IN p_estado VARCHAR(50), IN p_creado_por INT
+)
+BEGIN
+    INSERT INTO planificador (
+        id_man, id_actividad, id_campana, id_opr, fecha_inicio, fecha_fin,
+        metodologia, sala, cupo, estado, creado_por
+    )
+    VALUES (
+        p_id_man, p_id_actividad, p_id_campana, p_id_opr, p_fecha_inicio, p_fecha_fin,
+        p_metodologia, p_sala, p_cupo, p_estado, p_creado_por
+    );
+
+    SELECT
+        id_planificador, id_man, id_actividad, id_campana, id_opr, fecha_inicio,
+        fecha_fin, metodologia, sala, cupo, estado, creado_por
+    FROM planificador WHERE id_planificador = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_pensum_create $$
+CREATE PROCEDURE sp_pensum_create(
+    IN p_id_man INT, IN p_id_actividad_base INT, IN p_nombre_del_pensum VARCHAR(150),
+    IN p_objetivo_del_pensum TEXT, IN p_id_publico_objetivo INT,
+    IN p_duracion_de_la_sesion DECIMAL(5, 2), IN p_unidad_duracion_sesion VARCHAR(20), IN p_estado TINYINT(1)
+)
+BEGIN
+    INSERT INTO pensum (
+        id_man, id_actividad_base, nombre_del_pensum, objetivo_del_pensum,
+        id_publico_objetivo, duracion_de_la_sesion, unidad_duracion_sesion, estado
+    )
+    VALUES (
+        p_id_man, p_id_actividad_base, p_nombre_del_pensum, p_objetivo_del_pensum,
+        p_id_publico_objetivo, p_duracion_de_la_sesion, p_unidad_duracion_sesion, p_estado
+    );
+
+    SELECT
+        id_pensum, id_man, id_actividad_base, nombre_del_pensum, objetivo_del_pensum,
+        id_publico_objetivo, duracion_de_la_sesion, unidad_duracion_sesion, estado
+    FROM pensum WHERE id_pensum = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_pensum_detalle_create $$
+CREATE PROCEDURE sp_pensum_detalle_create(
+    IN p_id_pensum INT, IN p_dia_de_capacitacion VARCHAR(50), IN p_tema VARCHAR(200),
+    IN p_contenido TEXT, IN p_top_tipologias VARCHAR(255), IN p_duracion DECIMAL(5, 2),
+    IN p_objetivo TEXT, IN p_descripcion_de_la_actividad TEXT, IN p_rutas TEXT
+)
+BEGIN
+    INSERT INTO pensum_detalle (
+        id_pensum, dia_de_capacitacion, tema, contenido, top_tipologias,
+        duracion, objetivo, descripcion_de_la_actividad, rutas
+    )
+    VALUES (
+        p_id_pensum, p_dia_de_capacitacion, p_tema, p_contenido, p_top_tipologias,
+        p_duracion, p_objetivo, p_descripcion_de_la_actividad, p_rutas
+    );
+
+    SELECT
+        id_pensum_detalle, id_pensum, dia_de_capacitacion, tema, contenido, top_tipologias,
+        duracion, objetivo, descripcion_de_la_actividad, rutas
+    FROM pensum_detalle WHERE id_pensum_detalle = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_pensum_create $$
+CREATE PROCEDURE sp_opr_pensum_create(
+    IN p_id_opr INT, IN p_id_pensum INT, IN p_fecha_asignacion DATE
+)
+BEGIN
+    INSERT INTO opr_pensum (id_opr, id_pensum, fecha_asignacion)
+    VALUES (p_id_opr, p_id_pensum, p_fecha_asignacion);
+    SELECT id_opr_pensum, id_opr, id_pensum, fecha_asignacion
+    FROM opr_pensum WHERE id_opr_pensum = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_wave_formador_create $$
+CREATE PROCEDURE sp_wave_formador_create(
+    IN p_id_persona INT, IN p_id_opr INT, IN p_id_actividad INT,
+    IN p_fecha DATE, IN p_asistencia TINYINT(1), IN p_observacion TEXT
+)
+BEGIN
+    INSERT INTO wave_formador (id_persona, id_opr, id_actividad, fecha, asistencia, observacion)
+    VALUES (p_id_persona, p_id_opr, p_id_actividad, p_fecha, p_asistencia, p_observacion);
+    SELECT id_wave_formador, id_persona, id_opr, id_actividad, fecha, asistencia, observacion
+    FROM wave_formador WHERE id_wave_formador = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_asistencia_qr_marcar $$
+CREATE PROCEDURE sp_asistencia_qr_marcar(
+    IN p_codigo_qr CHAR(36), IN p_id_opr INT, IN p_id_actividad INT, IN p_fecha DATE, IN p_observacion TEXT
+)
+BEGIN
+    DECLARE v_id_persona INT;
+    SELECT id_persona INTO v_id_persona FROM personas WHERE codigo_qr_unico = p_codigo_qr LIMIT 1;
+    IF v_id_persona IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'QR no asociado a participante';
+    END IF;
+    INSERT INTO wave_formador (id_persona, id_opr, id_actividad, fecha, asistencia, observacion)
+    VALUES (v_id_persona, p_id_opr, p_id_actividad, p_fecha, 1, p_observacion);
+    SELECT id_wave_formador, id_persona, id_opr, id_actividad, fecha, asistencia, observacion
+    FROM wave_formador WHERE id_wave_formador = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_asistencia_ia_contrastar $$
+CREATE PROCEDURE sp_asistencia_ia_contrastar(IN p_id_planificador INT)
+BEGIN
+    DECLARE v_id_opr INT;
+    DECLARE v_id_actividad INT;
+    DECLARE v_fecha DATE;
+
+    SELECT id_opr, id_actividad, DATE(fecha_inicio)
+    INTO v_id_opr, v_id_actividad, v_fecha
+    FROM planificador
+    WHERE id_planificador = p_id_planificador
+    LIMIT 1;
+
+    IF v_id_opr IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Planificador sin grupo asociado';
+    END IF;
+
+    DELETE FROM asistencia_ia WHERE id_planificador = p_id_planificador;
+
+    INSERT INTO asistencia_ia (
+        id_planificador, id_persona, codigo_qr_leido, asistencia_esperada,
+        asistencia_marcada_qr, resultado_contraste, observacion_ia, fecha_analisis
+    )
+    SELECT
+        p_id_planificador,
+        op.id_persona,
+        CASE WHEN wf.id_wave_formador IS NOT NULL THEN pe.codigo_qr_unico ELSE NULL END,
+        1,
+        CASE WHEN wf.id_wave_formador IS NOT NULL THEN 1 ELSE 0 END,
+        CASE WHEN wf.id_wave_formador IS NOT NULL THEN 'ASISTIO' ELSE 'NO_ASISTIO' END,
+        'Contraste ejecutado automaticamente',
+        NOW()
+    FROM opr_participantes op
+    INNER JOIN personas pe ON pe.id_persona = op.id_persona
+    LEFT JOIN wave_formador wf
+        ON wf.id_persona = op.id_persona
+       AND wf.id_opr = v_id_opr
+       AND wf.id_actividad = v_id_actividad
+       AND wf.fecha = v_fecha
+       AND wf.asistencia = 1
+    WHERE op.id_opr = v_id_opr AND op.estado = 'ACTIVO';
+
+    SELECT id_asistencia_ia, id_persona, resultado_contraste, asistencia_esperada, asistencia_marcada_qr
+    FROM asistencia_ia
+    WHERE id_planificador = p_id_planificador
+    ORDER BY id_asistencia_ia;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_lista_naranja_create $$
+CREATE PROCEDURE sp_lista_naranja_create(
+    IN p_id_persona INT, IN p_id_opr INT, IN p_id_motivo INT, IN p_fecha_reporte DATE,
+    IN p_nivel_riesgo VARCHAR(50), IN p_observacion TEXT, IN p_estado VARCHAR(50)
+)
+BEGIN
+    INSERT INTO lista_naranja (
+        id_persona, id_opr, id_motivo, fecha_reporte, nivel_riesgo, observacion, estado
+    )
+    VALUES (
+        p_id_persona, p_id_opr, p_id_motivo, p_fecha_reporte, p_nivel_riesgo, p_observacion, p_estado
+    );
+    SELECT id_lista_naranja, id_persona, id_opr, id_motivo, fecha_reporte, nivel_riesgo, observacion, estado
+    FROM lista_naranja WHERE id_lista_naranja = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_persona_certificacion_create $$
+CREATE PROCEDURE sp_persona_certificacion_create(
+    IN p_id_persona INT, IN p_id_certificacion INT, IN p_fecha_certificacion DATE,
+    IN p_resultado VARCHAR(50), IN p_puntaje DECIMAL(5, 2), IN p_observacion TEXT
+)
+BEGIN
+    INSERT INTO persona_certificacion (
+        id_persona, id_certificacion, fecha_certificacion, resultado, puntaje, observacion
+    )
+    VALUES (
+        p_id_persona, p_id_certificacion, p_fecha_certificacion, p_resultado, p_puntaje, p_observacion
+    );
+    SELECT id_persona_certificacion, id_persona, id_certificacion, fecha_certificacion, resultado, puntaje, observacion
+    FROM persona_certificacion WHERE id_persona_certificacion = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_retroalimentacion_create $$
+CREATE PROCEDURE sp_retroalimentacion_create(
+    IN p_id_persona INT, IN p_creado_por INT, IN p_origen VARCHAR(50), IN p_titulo VARCHAR(150),
+    IN p_fortalezas TEXT, IN p_oportunidades TEXT, IN p_plan_accion TEXT, IN p_estado VARCHAR(50)
+)
+BEGIN
+    INSERT INTO retroalimentaciones (
+        id_persona, creado_por, origen, titulo, fortalezas, oportunidades, plan_accion, estado
+    )
+    VALUES (
+        p_id_persona, p_creado_por, p_origen, p_titulo, p_fortalezas, p_oportunidades, p_plan_accion, p_estado
+    );
+    SELECT id_retroalimentacion, id_persona, creado_por, origen, titulo, fortalezas, oportunidades, plan_accion, estado
+    FROM retroalimentaciones WHERE id_retroalimentacion = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_compromiso_create $$
+CREATE PROCEDURE sp_compromiso_create(
+    IN p_id_retroalimentacion INT, IN p_id_persona INT, IN p_id_usuario_responsable INT,
+    IN p_descripcion TEXT, IN p_fecha_compromiso DATE, IN p_fecha_vencimiento DATE, IN p_estado VARCHAR(50)
+)
+BEGIN
+    INSERT INTO compromisos (
+        id_retroalimentacion, id_persona, id_usuario_responsable, descripcion,
+        fecha_compromiso, fecha_vencimiento, estado
+    )
+    VALUES (
+        p_id_retroalimentacion, p_id_persona, p_id_usuario_responsable, p_descripcion,
+        p_fecha_compromiso, p_fecha_vencimiento, p_estado
+    );
+    SELECT id_compromiso, id_retroalimentacion, id_persona, id_usuario_responsable, descripcion, fecha_compromiso, fecha_vencimiento, estado
+    FROM compromisos WHERE id_compromiso = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_monitoreo_calidad_create $$
+CREATE PROCEDURE sp_monitoreo_calidad_create(
+    IN p_id_persona INT, IN p_id_analista INT, IN p_call_id VARCHAR(100), IN p_criterio VARCHAR(150),
+    IN p_puntaje DECIMAL(5, 2), IN p_hallazgo TEXT, IN p_recomendacion TEXT, IN p_estado VARCHAR(50)
+)
+BEGIN
+    INSERT INTO monitoreos_calidad (
+        id_persona, id_analista, call_id, criterio, puntaje, hallazgo, recomendacion, estado
+    )
+    VALUES (
+        p_id_persona, p_id_analista, p_call_id, p_criterio, p_puntaje, p_hallazgo, p_recomendacion, p_estado
+    );
+    SELECT id_monitoreo_calidad, id_persona, id_analista, call_id, criterio, puntaje, hallazgo, recomendacion, estado
+    FROM monitoreos_calidad WHERE id_monitoreo_calidad = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_ojt_seguimiento_create $$
+CREATE PROCEDURE sp_ojt_seguimiento_create(
+    IN p_id_persona INT, IN p_id_opr INT, IN p_dia INT, IN p_aht VARCHAR(20),
+    IN p_calidad DECIMAL(5, 2), IN p_csat DECIMAL(5, 2), IN p_estado VARCHAR(50), IN p_observacion TEXT
+)
+BEGIN
+    INSERT INTO ojt_seguimientos (id_persona, id_opr, dia, aht, calidad, csat, estado, observacion)
+    VALUES (p_id_persona, p_id_opr, p_dia, p_aht, p_calidad, p_csat, p_estado, p_observacion);
+    SELECT id_ojt_seguimiento, id_persona, id_opr, dia, aht, calidad, csat, estado, observacion
+    FROM ojt_seguimientos WHERE id_ojt_seguimiento = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_preturno_create $$
+CREATE PROCEDURE sp_preturno_create(
+    IN p_id_opr INT, IN p_creado_por INT, IN p_tema VARCHAR(150),
+    IN p_fecha DATE, IN p_preguntas INT, IN p_nota_promedio DECIMAL(5, 2), IN p_estado VARCHAR(50)
+)
+BEGIN
+    INSERT INTO preturnos (id_opr, creado_por, tema, fecha, preguntas, nota_promedio, estado)
+    VALUES (p_id_opr, p_creado_por, p_tema, p_fecha, p_preguntas, p_nota_promedio, p_estado);
+    SELECT id_preturno, id_opr, creado_por, tema, fecha, preguntas, nota_promedio, estado
+    FROM preturnos WHERE id_preturno = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_agenda_evento_create $$
+CREATE PROCEDURE sp_agenda_evento_create(
+    IN p_id_planificador INT, IN p_id_opr INT, IN p_id_responsable INT, IN p_titulo VARCHAR(200),
+    IN p_descripcion TEXT, IN p_fecha_inicio DATETIME, IN p_fecha_fin DATETIME,
+    IN p_modalidad VARCHAR(50), IN p_estado VARCHAR(50)
+)
+BEGIN
+    INSERT INTO agenda_eventos (
+        id_planificador, id_opr, id_responsable, titulo, descripcion,
+        fecha_inicio, fecha_fin, modalidad, estado
+    )
+    VALUES (
+        p_id_planificador, p_id_opr, p_id_responsable, p_titulo, p_descripcion,
+        p_fecha_inicio, p_fecha_fin, p_modalidad, p_estado
+    );
+    SELECT id_agenda_evento, id_planificador, id_opr, id_responsable, titulo, descripcion, fecha_inicio, fecha_fin, modalidad, estado
+    FROM agenda_eventos WHERE id_agenda_evento = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_biblioteca_actividad_create $$
+CREATE PROCEDURE sp_biblioteca_actividad_create(
+    IN p_id_actividad INT, IN p_creado_por INT, IN p_categoria VARCHAR(100),
+    IN p_titulo VARCHAR(150), IN p_descripcion TEXT, IN p_recurso_url VARCHAR(255), IN p_estado VARCHAR(50)
+)
+BEGIN
+    INSERT INTO biblioteca_actividades (
+        id_actividad, creado_por, categoria, titulo, descripcion, recurso_url, estado
+    )
+    VALUES (
+        p_id_actividad, p_creado_por, p_categoria, p_titulo, p_descripcion, p_recurso_url, p_estado
+    );
+    SELECT id_biblioteca_actividad, id_actividad, creado_por, categoria, titulo, descripcion, recurso_url, estado
+    FROM biblioteca_actividades WHERE id_biblioteca_actividad = LAST_INSERT_ID();
+END $$
+
+DELIMITER ;
+
+
+-- =========================
+-- PROCEDIMIENTOS COMPLEMENTARIOS FASTAPI / REACT
+-- =========================
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS sp_rol_listar $$
+CREATE PROCEDURE sp_rol_listar()
+BEGIN
+    SELECT id_rol, nombre, estado, fecha_creacion
+    FROM roles
+    ORDER BY nombre;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_usuario_listar $$
+CREATE PROCEDURE sp_usuario_listar()
+BEGIN
+    SELECT
+        u.id_usuario,
+        u.nombre_completo,
+        u.correo,
+        u.id_rol,
+        r.nombre AS rol_nombre,
+        u.codigo_qr_unico,
+        u.estado,
+        u.fecha_creacion
+    FROM usuarios u
+    INNER JOIN roles r ON r.id_rol = u.id_rol
+    ORDER BY u.nombre_completo;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_usuario_obtener $$
+CREATE PROCEDURE sp_usuario_obtener(IN p_id_usuario INT)
+BEGIN
+    SELECT
+        u.id_usuario,
+        u.nombre_completo,
+        u.correo,
+        u.id_rol,
+        r.nombre AS rol_nombre,
+        u.codigo_qr_unico,
+        u.estado,
+        u.fecha_creacion
+    FROM usuarios u
+    INNER JOIN roles r ON r.id_rol = u.id_rol
+    WHERE u.id_usuario = p_id_usuario;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_usuario_delete $$
+CREATE PROCEDURE sp_usuario_delete(IN p_id_usuario INT)
+BEGIN
+    UPDATE usuarios
+    SET estado = 0
+    WHERE id_usuario = p_id_usuario;
+
+    SELECT p_id_usuario AS id_usuario, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_campana_listar $$
+CREATE PROCEDURE sp_campana_listar()
+BEGIN
+    SELECT
+        c.id_campana,
+        c.nombre,
+        c.ceco,
+        c.descripcion,
+        c.estado,
+        c.fecha_creacion,
+        (
+            SELECT COUNT(*)
+            FROM opr o
+            WHERE o.id_campana = c.id_campana
+        ) AS total_grupos,
+        (
+            SELECT COUNT(*)
+            FROM personas p
+            WHERE p.id_campana = c.id_campana
+        ) AS total_personas
+    FROM campanas c
+    ORDER BY c.fecha_creacion DESC, c.nombre;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_campana_obtener $$
+CREATE PROCEDURE sp_campana_obtener(IN p_id_campana INT)
+BEGIN
+    SELECT
+        c.id_campana,
+        c.nombre,
+        c.ceco,
+        c.descripcion,
+        c.estado,
+        c.fecha_creacion,
+        (
+            SELECT COUNT(*)
+            FROM opr o
+            WHERE o.id_campana = c.id_campana
+        ) AS total_grupos,
+        (
+            SELECT COUNT(*)
+            FROM personas p
+            WHERE p.id_campana = c.id_campana
+        ) AS total_personas
+    FROM campanas c
+    WHERE c.id_campana = p_id_campana;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_campana_update $$
+CREATE PROCEDURE sp_campana_update(
+    IN p_id_campana INT,
+    IN p_nombre VARCHAR(150),
+    IN p_ceco VARCHAR(50),
+    IN p_descripcion VARCHAR(255),
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    UPDATE campanas
+    SET nombre = p_nombre,
+        ceco = p_ceco,
+        descripcion = p_descripcion,
+        estado = p_estado
+    WHERE id_campana = p_id_campana;
+
+    CALL sp_campana_obtener(p_id_campana);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_campana_delete $$
+CREATE PROCEDURE sp_campana_delete(IN p_id_campana INT)
+BEGIN
+    UPDATE campanas
+    SET estado = 0
+    WHERE id_campana = p_id_campana;
+
+    SELECT p_id_campana AS id_campana, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_tipo_actividad_listar $$
+CREATE PROCEDURE sp_tipo_actividad_listar()
+BEGIN
+    SELECT id_tipo_actividad, nombre, descripcion, estado, fecha_creacion
+    FROM tipo_actividad
+    ORDER BY nombre;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_publico_objetivo_listar $$
+CREATE PROCEDURE sp_publico_objetivo_listar()
+BEGIN
+    SELECT id_publico_objetivo, nombre, descripcion, fecha_creacion
+    FROM publico_objetivo
+    ORDER BY nombre;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_actividad_listar $$
+CREATE PROCEDURE sp_actividad_listar()
+BEGIN
+    SELECT
+        a.id_actividad,
+        a.nombre,
+        a.descripcion,
+        a.id_tipo_actividad,
+        ta.nombre AS tipo_actividad_nombre,
+        a.id_publico_objetivo,
+        po.nombre AS publico_objetivo_nombre,
+        a.duracion_horas,
+        a.estado,
+        a.fecha_creacion
+    FROM actividades a
+    INNER JOIN tipo_actividad ta ON ta.id_tipo_actividad = a.id_tipo_actividad
+    LEFT JOIN publico_objetivo po ON po.id_publico_objetivo = a.id_publico_objetivo
+    ORDER BY a.fecha_creacion DESC, a.nombre;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_actividad_obtener $$
+CREATE PROCEDURE sp_actividad_obtener(IN p_id_actividad INT)
+BEGIN
+    SELECT
+        a.id_actividad,
+        a.nombre,
+        a.descripcion,
+        a.id_tipo_actividad,
+        ta.nombre AS tipo_actividad_nombre,
+        a.id_publico_objetivo,
+        po.nombre AS publico_objetivo_nombre,
+        a.duracion_horas,
+        a.estado,
+        a.fecha_creacion
+    FROM actividades a
+    INNER JOIN tipo_actividad ta ON ta.id_tipo_actividad = a.id_tipo_actividad
+    LEFT JOIN publico_objetivo po ON po.id_publico_objetivo = a.id_publico_objetivo
+    WHERE a.id_actividad = p_id_actividad;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_actividad_update $$
+CREATE PROCEDURE sp_actividad_update(
+    IN p_id_actividad INT,
+    IN p_nombre VARCHAR(200),
+    IN p_descripcion TEXT,
+    IN p_id_tipo_actividad INT,
+    IN p_id_publico_objetivo INT,
+    IN p_duracion_horas DECIMAL(5, 2),
+    IN p_estado TINYINT(1)
+)
+BEGIN
+    UPDATE actividades
+    SET nombre = p_nombre,
+        descripcion = p_descripcion,
+        id_tipo_actividad = p_id_tipo_actividad,
+        id_publico_objetivo = p_id_publico_objetivo,
+        duracion_horas = p_duracion_horas,
+        estado = p_estado
+    WHERE id_actividad = p_id_actividad;
+
+    CALL sp_actividad_obtener(p_id_actividad);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_actividad_delete $$
+CREATE PROCEDURE sp_actividad_delete(IN p_id_actividad INT)
+BEGIN
+    UPDATE actividades
+    SET estado = 0
+    WHERE id_actividad = p_id_actividad;
+
+    SELECT p_id_actividad AS id_actividad, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_persona_listar $$
+CREATE PROCEDURE sp_persona_listar()
+BEGIN
+    SELECT
+        p.id_persona,
+        p.tipo_documento,
+        p.numero_documento,
+        p.nombres,
+        p.apellidos,
+        CONCAT(p.nombres, ' ', p.apellidos) AS nombre_completo,
+        p.correo,
+        p.telefono,
+        p.fecha_ingreso,
+        p.id_campana,
+        c.nombre AS campana_nombre,
+        p.id_hc,
+        h.codigo_hc,
+        p.codigo_qr_unico,
+        p.estado,
+        p.fecha_creacion
+    FROM personas p
+    LEFT JOIN campanas c ON c.id_campana = p.id_campana
+    LEFT JOIN hc h ON h.id_hc = p.id_hc
+    ORDER BY p.fecha_creacion DESC, p.nombres, p.apellidos;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_persona_obtener $$
+CREATE PROCEDURE sp_persona_obtener(IN p_id_persona INT)
+BEGIN
+    SELECT
+        p.id_persona,
+        p.tipo_documento,
+        p.numero_documento,
+        p.nombres,
+        p.apellidos,
+        CONCAT(p.nombres, ' ', p.apellidos) AS nombre_completo,
+        p.correo,
+        p.telefono,
+        p.fecha_ingreso,
+        p.id_campana,
+        c.nombre AS campana_nombre,
+        p.id_hc,
+        h.codigo_hc,
+        p.codigo_qr_unico,
+        p.estado,
+        p.fecha_creacion
+    FROM personas p
+    LEFT JOIN campanas c ON c.id_campana = p.id_campana
+    LEFT JOIN hc h ON h.id_hc = p.id_hc
+    WHERE p.id_persona = p_id_persona;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_persona_update $$
+CREATE PROCEDURE sp_persona_update(
+    IN p_id_persona INT,
+    IN p_tipo_documento VARCHAR(20),
+    IN p_numero_documento VARCHAR(30),
+    IN p_nombres VARCHAR(100),
+    IN p_apellidos VARCHAR(100),
+    IN p_correo VARCHAR(150),
+    IN p_telefono VARCHAR(30),
+    IN p_fecha_ingreso DATE,
+    IN p_id_campana INT,
+    IN p_id_hc INT,
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    UPDATE personas
+    SET tipo_documento = p_tipo_documento,
+        numero_documento = p_numero_documento,
+        nombres = p_nombres,
+        apellidos = p_apellidos,
+        correo = p_correo,
+        telefono = p_telefono,
+        fecha_ingreso = p_fecha_ingreso,
+        id_campana = p_id_campana,
+        id_hc = p_id_hc,
+        estado = p_estado
+    WHERE id_persona = p_id_persona;
+
+    CALL sp_persona_obtener(p_id_persona);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_persona_delete $$
+CREATE PROCEDURE sp_persona_delete(IN p_id_persona INT)
+BEGIN
+    UPDATE personas
+    SET estado = 'INACTIVO'
+    WHERE id_persona = p_id_persona;
+
+    SELECT p_id_persona AS id_persona, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_listar $$
+CREATE PROCEDURE sp_opr_listar()
+BEGIN
+    SELECT
+        o.id_opr,
+        o.codigo_opr,
+        o.nombre,
+        o.id_campana,
+        c.nombre AS campana_nombre,
+        o.fecha_inicio,
+        o.fecha_fin,
+        o.estado,
+        o.fecha_creacion,
+        (
+            SELECT COUNT(*)
+            FROM opr_participantes op
+            WHERE op.id_opr = o.id_opr
+              AND (op.estado IS NULL OR op.estado <> 'RETIRADO')
+        ) AS total_participantes,
+        (
+            SELECT COUNT(*)
+            FROM formador_asignado fa
+            WHERE fa.id_opr = o.id_opr
+        ) AS total_formadores
+    FROM opr o
+    LEFT JOIN campanas c ON c.id_campana = o.id_campana
+    ORDER BY o.fecha_creacion DESC, o.nombre;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_obtener $$
+CREATE PROCEDURE sp_opr_obtener(IN p_id_opr INT)
+BEGIN
+    SELECT
+        o.id_opr,
+        o.codigo_opr,
+        o.nombre,
+        o.id_campana,
+        c.nombre AS campana_nombre,
+        o.fecha_inicio,
+        o.fecha_fin,
+        o.estado,
+        o.fecha_creacion,
+        (
+            SELECT COUNT(*)
+            FROM opr_participantes op
+            WHERE op.id_opr = o.id_opr
+              AND (op.estado IS NULL OR op.estado <> 'RETIRADO')
+        ) AS total_participantes,
+        (
+            SELECT COUNT(*)
+            FROM formador_asignado fa
+            WHERE fa.id_opr = o.id_opr
+        ) AS total_formadores
+    FROM opr o
+    LEFT JOIN campanas c ON c.id_campana = o.id_campana
+    WHERE o.id_opr = p_id_opr;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_update $$
+CREATE PROCEDURE sp_opr_update(
+    IN p_id_opr INT,
+    IN p_codigo_opr VARCHAR(50),
+    IN p_nombre VARCHAR(150),
+    IN p_id_campana INT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE,
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    UPDATE opr
+    SET codigo_opr = p_codigo_opr,
+        nombre = p_nombre,
+        id_campana = p_id_campana,
+        fecha_inicio = p_fecha_inicio,
+        fecha_fin = p_fecha_fin,
+        estado = p_estado
+    WHERE id_opr = p_id_opr;
+
+    CALL sp_opr_obtener(p_id_opr);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_delete $$
+CREATE PROCEDURE sp_opr_delete(IN p_id_opr INT)
+BEGIN
+    UPDATE opr
+    SET estado = 'INACTIVO'
+    WHERE id_opr = p_id_opr;
+
+    SELECT p_id_opr AS id_opr, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_participante_listar $$
+CREATE PROCEDURE sp_opr_participante_listar()
+BEGIN
+    SELECT
+        op.id_opr_participante,
+        op.id_opr,
+        o.codigo_opr,
+        o.nombre AS grupo_nombre,
+        op.id_persona,
+        CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+        p.numero_documento,
+        op.fecha_asignacion,
+        op.estado
+    FROM opr_participantes op
+    INNER JOIN opr o ON o.id_opr = op.id_opr
+    INNER JOIN personas p ON p.id_persona = op.id_persona
+    ORDER BY op.fecha_asignacion DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_participante_obtener $$
+CREATE PROCEDURE sp_opr_participante_obtener(IN p_id_opr_participante INT)
+BEGIN
+    SELECT
+        op.id_opr_participante,
+        op.id_opr,
+        o.codigo_opr,
+        o.nombre AS grupo_nombre,
+        op.id_persona,
+        CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+        p.numero_documento,
+        op.fecha_asignacion,
+        op.estado
+    FROM opr_participantes op
+    INNER JOIN opr o ON o.id_opr = op.id_opr
+    INNER JOIN personas p ON p.id_persona = op.id_persona
+    WHERE op.id_opr_participante = p_id_opr_participante;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_participante_update $$
+CREATE PROCEDURE sp_opr_participante_update(
+    IN p_id_opr_participante INT,
+    IN p_id_opr INT,
+    IN p_id_persona INT,
+    IN p_fecha_asignacion DATETIME,
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    UPDATE opr_participantes
+    SET id_opr = p_id_opr,
+        id_persona = p_id_persona,
+        fecha_asignacion = p_fecha_asignacion,
+        estado = p_estado
+    WHERE id_opr_participante = p_id_opr_participante;
+
+    CALL sp_opr_participante_obtener(p_id_opr_participante);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_opr_participante_delete $$
+CREATE PROCEDURE sp_opr_participante_delete(IN p_id_opr_participante INT)
+BEGIN
+    UPDATE opr_participantes
+    SET estado = 'RETIRADO'
+    WHERE id_opr_participante = p_id_opr_participante;
+
+    SELECT p_id_opr_participante AS id_opr_participante, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_formador_asignado_listar $$
+CREATE PROCEDURE sp_formador_asignado_listar()
+BEGIN
+    SELECT
+        fa.id_formador_asignado,
+        fa.id_opr,
+        o.codigo_opr,
+        o.nombre AS grupo_nombre,
+        fa.id_usuario,
+        u.nombre_completo AS usuario_nombre,
+        fa.fecha_asignacion,
+        fa.rol_formador
+    FROM formador_asignado fa
+    INNER JOIN opr o ON o.id_opr = fa.id_opr
+    INNER JOIN usuarios u ON u.id_usuario = fa.id_usuario
+    ORDER BY fa.fecha_asignacion DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_formador_asignado_obtener $$
+CREATE PROCEDURE sp_formador_asignado_obtener(IN p_id_formador_asignado INT)
+BEGIN
+    SELECT
+        fa.id_formador_asignado,
+        fa.id_opr,
+        o.codigo_opr,
+        o.nombre AS grupo_nombre,
+        fa.id_usuario,
+        u.nombre_completo AS usuario_nombre,
+        fa.fecha_asignacion,
+        fa.rol_formador
+    FROM formador_asignado fa
+    INNER JOIN opr o ON o.id_opr = fa.id_opr
+    INNER JOIN usuarios u ON u.id_usuario = fa.id_usuario
+    WHERE fa.id_formador_asignado = p_id_formador_asignado;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_formador_asignado_update $$
+CREATE PROCEDURE sp_formador_asignado_update(
+    IN p_id_formador_asignado INT,
+    IN p_id_opr INT,
+    IN p_id_usuario INT,
+    IN p_fecha_asignacion DATETIME,
+    IN p_rol_formador VARCHAR(100)
+)
+BEGIN
+    UPDATE formador_asignado
+    SET id_opr = p_id_opr,
+        id_usuario = p_id_usuario,
+        fecha_asignacion = p_fecha_asignacion,
+        rol_formador = p_rol_formador
+    WHERE id_formador_asignado = p_id_formador_asignado;
+
+    CALL sp_formador_asignado_obtener(p_id_formador_asignado);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_formador_asignado_delete $$
+CREATE PROCEDURE sp_formador_asignado_delete(IN p_id_formador_asignado INT)
+BEGIN
+    DELETE FROM formador_asignado
+    WHERE id_formador_asignado = p_id_formador_asignado;
+
+    SELECT p_id_formador_asignado AS id_formador_asignado, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_man_listar $$
+CREATE PROCEDURE sp_man_listar()
+BEGIN
+    SELECT
+        m.id_man,
+        m.codigo,
+        m.fecha_solicitud,
+        m.id_campana,
+        c.nombre AS campana_nombre,
+        m.id_actividad,
+        a.nombre AS actividad_nombre,
+        m.nombre_del_pensum,
+        m.objetivo_del_pensum,
+        m.estado,
+        m.fecha_creacion
+    FROM man m
+    LEFT JOIN campanas c ON c.id_campana = m.id_campana
+    INNER JOIN actividades a ON a.id_actividad = m.id_actividad
+    ORDER BY m.fecha_creacion DESC, m.codigo;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_planificador_listar $$
+CREATE PROCEDURE sp_planificador_listar()
+BEGIN
+    SELECT
+        p.id_planificador,
+        p.id_man,
+        m.codigo AS codigo_man,
+        p.id_actividad,
+        a.nombre AS actividad_nombre,
+        p.id_campana,
+        c.nombre AS campana_nombre,
+        p.id_opr,
+        o.codigo_opr,
+        o.nombre AS grupo_nombre,
+        p.fecha_inicio,
+        p.fecha_fin,
+        p.metodologia,
+        p.sala,
+        p.cupo,
+        p.estado,
+        p.creado_por,
+        u.nombre_completo AS creado_por_nombre,
+        p.fecha_creacion
+    FROM planificador p
+    INNER JOIN man m ON m.id_man = p.id_man
+    INNER JOIN actividades a ON a.id_actividad = p.id_actividad
+    LEFT JOIN campanas c ON c.id_campana = p.id_campana
+    LEFT JOIN opr o ON o.id_opr = p.id_opr
+    LEFT JOIN usuarios u ON u.id_usuario = p.creado_por
+    ORDER BY p.fecha_inicio DESC, p.id_planificador DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_planificador_obtener $$
+CREATE PROCEDURE sp_planificador_obtener(IN p_id_planificador INT)
+BEGIN
+    SELECT
+        p.id_planificador,
+        p.id_man,
+        m.codigo AS codigo_man,
+        p.id_actividad,
+        a.nombre AS actividad_nombre,
+        p.id_campana,
+        c.nombre AS campana_nombre,
+        p.id_opr,
+        o.codigo_opr,
+        o.nombre AS grupo_nombre,
+        p.fecha_inicio,
+        p.fecha_fin,
+        p.metodologia,
+        p.sala,
+        p.cupo,
+        p.estado,
+        p.creado_por,
+        u.nombre_completo AS creado_por_nombre,
+        p.fecha_creacion
+    FROM planificador p
+    INNER JOIN man m ON m.id_man = p.id_man
+    INNER JOIN actividades a ON a.id_actividad = p.id_actividad
+    LEFT JOIN campanas c ON c.id_campana = p.id_campana
+    LEFT JOIN opr o ON o.id_opr = p.id_opr
+    LEFT JOIN usuarios u ON u.id_usuario = p.creado_por
+    WHERE p.id_planificador = p_id_planificador;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_planificador_update $$
+CREATE PROCEDURE sp_planificador_update(
+    IN p_id_planificador INT,
+    IN p_id_man INT,
+    IN p_id_actividad INT,
+    IN p_id_campana INT,
+    IN p_id_opr INT,
+    IN p_fecha_inicio DATETIME,
+    IN p_fecha_fin DATETIME,
+    IN p_metodologia VARCHAR(100),
+    IN p_sala VARCHAR(100),
+    IN p_cupo INT,
+    IN p_estado VARCHAR(50),
+    IN p_creado_por INT
+)
+BEGIN
+    UPDATE planificador
+    SET id_man = p_id_man,
+        id_actividad = p_id_actividad,
+        id_campana = p_id_campana,
+        id_opr = p_id_opr,
+        fecha_inicio = p_fecha_inicio,
+        fecha_fin = p_fecha_fin,
+        metodologia = p_metodologia,
+        sala = p_sala,
+        cupo = p_cupo,
+        estado = p_estado,
+        creado_por = p_creado_por
+    WHERE id_planificador = p_id_planificador;
+
+    CALL sp_planificador_obtener(p_id_planificador);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_planificador_delete $$
+CREATE PROCEDURE sp_planificador_delete(IN p_id_planificador INT)
+BEGIN
+    UPDATE planificador
+    SET estado = 'CANCELADO'
+    WHERE id_planificador = p_id_planificador;
+
+    SELECT p_id_planificador AS id_planificador, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_agenda_evento_listar $$
+CREATE PROCEDURE sp_agenda_evento_listar()
+BEGIN
+    SELECT
+        ag.id_agenda_evento,
+        ag.id_planificador,
+        ag.id_opr,
+        ag.id_responsable,
+        ag.titulo,
+        ag.descripcion,
+        ag.fecha_inicio,
+        ag.fecha_fin,
+        ag.modalidad,
+        ag.estado,
+        o.codigo_opr,
+        o.nombre AS grupo_nombre,
+        u.nombre_completo AS responsable_nombre
+    FROM agenda_eventos ag
+    LEFT JOIN opr o ON o.id_opr = ag.id_opr
+    INNER JOIN usuarios u ON u.id_usuario = ag.id_responsable
+    ORDER BY ag.fecha_inicio DESC, ag.id_agenda_evento DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_agenda_evento_obtener $$
+CREATE PROCEDURE sp_agenda_evento_obtener(IN p_id_agenda_evento INT)
+BEGIN
+    SELECT
+        ag.id_agenda_evento,
+        ag.id_planificador,
+        ag.id_opr,
+        ag.id_responsable,
+        ag.titulo,
+        ag.descripcion,
+        ag.fecha_inicio,
+        ag.fecha_fin,
+        ag.modalidad,
+        ag.estado,
+        o.codigo_opr,
+        o.nombre AS grupo_nombre,
+        u.nombre_completo AS responsable_nombre
+    FROM agenda_eventos ag
+    LEFT JOIN opr o ON o.id_opr = ag.id_opr
+    INNER JOIN usuarios u ON u.id_usuario = ag.id_responsable
+    WHERE ag.id_agenda_evento = p_id_agenda_evento;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_agenda_evento_update $$
+CREATE PROCEDURE sp_agenda_evento_update(
+    IN p_id_agenda_evento INT,
+    IN p_id_planificador INT,
+    IN p_id_opr INT,
+    IN p_id_responsable INT,
+    IN p_titulo VARCHAR(200),
+    IN p_descripcion TEXT,
+    IN p_fecha_inicio DATETIME,
+    IN p_fecha_fin DATETIME,
+    IN p_modalidad VARCHAR(50),
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    UPDATE agenda_eventos
+    SET id_planificador = p_id_planificador,
+        id_opr = p_id_opr,
+        id_responsable = p_id_responsable,
+        titulo = p_titulo,
+        descripcion = p_descripcion,
+        fecha_inicio = p_fecha_inicio,
+        fecha_fin = p_fecha_fin,
+        modalidad = p_modalidad,
+        estado = p_estado
+    WHERE id_agenda_evento = p_id_agenda_evento;
+
+    CALL sp_agenda_evento_obtener(p_id_agenda_evento);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_agenda_evento_delete $$
+CREATE PROCEDURE sp_agenda_evento_delete(IN p_id_agenda_evento INT)
+BEGIN
+    UPDATE agenda_eventos
+    SET estado = 'CANCELADO'
+    WHERE id_agenda_evento = p_id_agenda_evento;
+
+    SELECT p_id_agenda_evento AS id_agenda_evento, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_biblioteca_actividad_listar $$
+CREATE PROCEDURE sp_biblioteca_actividad_listar()
+BEGIN
+    SELECT
+        b.id_biblioteca_actividad,
+        b.id_actividad,
+        a.nombre AS actividad_nombre,
+        b.creado_por,
+        u.nombre_completo AS creado_por_nombre,
+        b.categoria,
+        b.titulo,
+        b.descripcion,
+        b.recurso_url,
+        b.estado,
+        b.fecha_creacion
+    FROM biblioteca_actividades b
+    LEFT JOIN actividades a ON a.id_actividad = b.id_actividad
+    INNER JOIN usuarios u ON u.id_usuario = b.creado_por
+    ORDER BY b.fecha_creacion DESC, b.titulo;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_biblioteca_actividad_obtener $$
+CREATE PROCEDURE sp_biblioteca_actividad_obtener(IN p_id_biblioteca_actividad INT)
+BEGIN
+    SELECT
+        b.id_biblioteca_actividad,
+        b.id_actividad,
+        a.nombre AS actividad_nombre,
+        b.creado_por,
+        u.nombre_completo AS creado_por_nombre,
+        b.categoria,
+        b.titulo,
+        b.descripcion,
+        b.recurso_url,
+        b.estado,
+        b.fecha_creacion
+    FROM biblioteca_actividades b
+    LEFT JOIN actividades a ON a.id_actividad = b.id_actividad
+    INNER JOIN usuarios u ON u.id_usuario = b.creado_por
+    WHERE b.id_biblioteca_actividad = p_id_biblioteca_actividad;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_biblioteca_actividad_update $$
+CREATE PROCEDURE sp_biblioteca_actividad_update(
+    IN p_id_biblioteca_actividad INT,
+    IN p_id_actividad INT,
+    IN p_creado_por INT,
+    IN p_categoria VARCHAR(100),
+    IN p_titulo VARCHAR(150),
+    IN p_descripcion TEXT,
+    IN p_recurso_url VARCHAR(255),
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    UPDATE biblioteca_actividades
+    SET id_actividad = p_id_actividad,
+        creado_por = p_creado_por,
+        categoria = p_categoria,
+        titulo = p_titulo,
+        descripcion = p_descripcion,
+        recurso_url = p_recurso_url,
+        estado = p_estado
+    WHERE id_biblioteca_actividad = p_id_biblioteca_actividad;
+
+    CALL sp_biblioteca_actividad_obtener(p_id_biblioteca_actividad);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_biblioteca_actividad_delete $$
+CREATE PROCEDURE sp_biblioteca_actividad_delete(IN p_id_biblioteca_actividad INT)
+BEGIN
+    UPDATE biblioteca_actividades
+    SET estado = 'INACTIVO'
+    WHERE id_biblioteca_actividad = p_id_biblioteca_actividad;
+
+    SELECT p_id_biblioteca_actividad AS id_biblioteca_actividad, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_retroalimentacion_listar $$
+CREATE PROCEDURE sp_retroalimentacion_listar()
+BEGIN
+    SELECT
+        r.id_retroalimentacion,
+        r.id_persona,
+        CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+        r.creado_por,
+        u.nombre_completo AS creado_por_nombre,
+        r.origen,
+        r.titulo,
+        r.fortalezas,
+        r.oportunidades,
+        r.plan_accion,
+        r.estado,
+        r.fecha_creacion
+    FROM retroalimentaciones r
+    INNER JOIN personas p ON p.id_persona = r.id_persona
+    INNER JOIN usuarios u ON u.id_usuario = r.creado_por
+    ORDER BY r.fecha_creacion DESC, r.id_retroalimentacion DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_retroalimentacion_obtener $$
+CREATE PROCEDURE sp_retroalimentacion_obtener(IN p_id_retroalimentacion INT)
+BEGIN
+    SELECT
+        r.id_retroalimentacion,
+        r.id_persona,
+        CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+        r.creado_por,
+        u.nombre_completo AS creado_por_nombre,
+        r.origen,
+        r.titulo,
+        r.fortalezas,
+        r.oportunidades,
+        r.plan_accion,
+        r.estado,
+        r.fecha_creacion
+    FROM retroalimentaciones r
+    INNER JOIN personas p ON p.id_persona = r.id_persona
+    INNER JOIN usuarios u ON u.id_usuario = r.creado_por
+    WHERE r.id_retroalimentacion = p_id_retroalimentacion;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_retroalimentacion_update $$
+CREATE PROCEDURE sp_retroalimentacion_update(
+    IN p_id_retroalimentacion INT,
+    IN p_id_persona INT,
+    IN p_creado_por INT,
+    IN p_origen VARCHAR(50),
+    IN p_titulo VARCHAR(150),
+    IN p_fortalezas TEXT,
+    IN p_oportunidades TEXT,
+    IN p_plan_accion TEXT,
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    UPDATE retroalimentaciones
+    SET id_persona = p_id_persona,
+        creado_por = p_creado_por,
+        origen = p_origen,
+        titulo = p_titulo,
+        fortalezas = p_fortalezas,
+        oportunidades = p_oportunidades,
+        plan_accion = p_plan_accion,
+        estado = p_estado
+    WHERE id_retroalimentacion = p_id_retroalimentacion;
+
+    CALL sp_retroalimentacion_obtener(p_id_retroalimentacion);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_retroalimentacion_delete $$
+CREATE PROCEDURE sp_retroalimentacion_delete(IN p_id_retroalimentacion INT)
+BEGIN
+    UPDATE retroalimentaciones
+    SET estado = 'ELIMINADA'
+    WHERE id_retroalimentacion = p_id_retroalimentacion;
+
+    SELECT p_id_retroalimentacion AS id_retroalimentacion, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_compromiso_listar $$
+CREATE PROCEDURE sp_compromiso_listar()
+BEGIN
+    SELECT
+        c.id_compromiso,
+        c.id_retroalimentacion,
+        r.titulo AS retroalimentacion_titulo,
+        c.id_persona,
+        CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+        c.id_usuario_responsable,
+        u.nombre_completo AS responsable_nombre,
+        c.descripcion,
+        c.fecha_compromiso,
+        c.fecha_vencimiento,
+        c.estado,
+        c.fecha_creacion
+    FROM compromisos c
+    INNER JOIN retroalimentaciones r ON r.id_retroalimentacion = c.id_retroalimentacion
+    INNER JOIN personas p ON p.id_persona = c.id_persona
+    LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario_responsable
+    ORDER BY c.fecha_creacion DESC, c.id_compromiso DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_compromiso_obtener $$
+CREATE PROCEDURE sp_compromiso_obtener(IN p_id_compromiso INT)
+BEGIN
+    SELECT
+        c.id_compromiso,
+        c.id_retroalimentacion,
+        r.titulo AS retroalimentacion_titulo,
+        c.id_persona,
+        CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+        c.id_usuario_responsable,
+        u.nombre_completo AS responsable_nombre,
+        c.descripcion,
+        c.fecha_compromiso,
+        c.fecha_vencimiento,
+        c.estado,
+        c.fecha_creacion
+    FROM compromisos c
+    INNER JOIN retroalimentaciones r ON r.id_retroalimentacion = c.id_retroalimentacion
+    INNER JOIN personas p ON p.id_persona = c.id_persona
+    LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario_responsable
+    WHERE c.id_compromiso = p_id_compromiso;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_compromiso_update $$
+CREATE PROCEDURE sp_compromiso_update(
+    IN p_id_compromiso INT,
+    IN p_id_retroalimentacion INT,
+    IN p_id_persona INT,
+    IN p_id_usuario_responsable INT,
+    IN p_descripcion TEXT,
+    IN p_fecha_compromiso DATE,
+    IN p_fecha_vencimiento DATE,
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    UPDATE compromisos
+    SET id_retroalimentacion = p_id_retroalimentacion,
+        id_persona = p_id_persona,
+        id_usuario_responsable = p_id_usuario_responsable,
+        descripcion = p_descripcion,
+        fecha_compromiso = p_fecha_compromiso,
+        fecha_vencimiento = p_fecha_vencimiento,
+        estado = p_estado
+    WHERE id_compromiso = p_id_compromiso;
+
+    CALL sp_compromiso_obtener(p_id_compromiso);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_compromiso_delete $$
+CREATE PROCEDURE sp_compromiso_delete(IN p_id_compromiso INT)
+BEGIN
+    UPDATE compromisos
+    SET estado = 'ANULADO'
+    WHERE id_compromiso = p_id_compromiso;
+
+    SELECT p_id_compromiso AS id_compromiso, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_monitoreo_calidad_listar $$
+CREATE PROCEDURE sp_monitoreo_calidad_listar()
+BEGIN
+    SELECT
+        m.id_monitoreo_calidad,
+        m.id_persona,
+        CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+        m.id_analista,
+        u.nombre_completo AS analista_nombre,
+        m.call_id,
+        m.criterio,
+        m.puntaje,
+        m.hallazgo,
+        m.recomendacion,
+        m.estado,
+        m.fecha_creacion
+    FROM monitoreos_calidad m
+    INNER JOIN personas p ON p.id_persona = m.id_persona
+    INNER JOIN usuarios u ON u.id_usuario = m.id_analista
+    ORDER BY m.fecha_creacion DESC, m.id_monitoreo_calidad DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_monitoreo_calidad_obtener $$
+CREATE PROCEDURE sp_monitoreo_calidad_obtener(IN p_id_monitoreo_calidad INT)
+BEGIN
+    SELECT
+        m.id_monitoreo_calidad,
+        m.id_persona,
+        CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+        m.id_analista,
+        u.nombre_completo AS analista_nombre,
+        m.call_id,
+        m.criterio,
+        m.puntaje,
+        m.hallazgo,
+        m.recomendacion,
+        m.estado,
+        m.fecha_creacion
+    FROM monitoreos_calidad m
+    INNER JOIN personas p ON p.id_persona = m.id_persona
+    INNER JOIN usuarios u ON u.id_usuario = m.id_analista
+    WHERE m.id_monitoreo_calidad = p_id_monitoreo_calidad;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_monitoreo_calidad_update $$
+CREATE PROCEDURE sp_monitoreo_calidad_update(
+    IN p_id_monitoreo_calidad INT,
+    IN p_id_persona INT,
+    IN p_id_analista INT,
+    IN p_call_id VARCHAR(100),
+    IN p_criterio VARCHAR(150),
+    IN p_puntaje DECIMAL(5, 2),
+    IN p_hallazgo TEXT,
+    IN p_recomendacion TEXT,
+    IN p_estado VARCHAR(50)
+)
+BEGIN
+    UPDATE monitoreos_calidad
+    SET id_persona = p_id_persona,
+        id_analista = p_id_analista,
+        call_id = p_call_id,
+        criterio = p_criterio,
+        puntaje = p_puntaje,
+        hallazgo = p_hallazgo,
+        recomendacion = p_recomendacion,
+        estado = p_estado
+    WHERE id_monitoreo_calidad = p_id_monitoreo_calidad;
+
+    CALL sp_monitoreo_calidad_obtener(p_id_monitoreo_calidad);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_monitoreo_calidad_delete $$
+CREATE PROCEDURE sp_monitoreo_calidad_delete(IN p_id_monitoreo_calidad INT)
+BEGIN
+    UPDATE monitoreos_calidad
+    SET estado = 'ANULADO'
+    WHERE id_monitoreo_calidad = p_id_monitoreo_calidad;
+
+    SELECT p_id_monitoreo_calidad AS id_monitoreo_calidad, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_ojt_seguimiento_listar $$
+CREATE PROCEDURE sp_ojt_seguimiento_listar()
+BEGIN
+    SELECT
+        s.id_ojt_seguimiento,
+        s.id_persona,
+        CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+        s.id_opr,
+        o.codigo_opr,
+        o.nombre AS grupo_nombre,
+        s.dia,
+        s.aht,
+        s.calidad,
+        s.csat,
+        s.estado,
+        s.observacion,
+        s.fecha_creacion
+    FROM ojt_seguimientos s
+    INNER JOIN personas p ON p.id_persona = s.id_persona
+    INNER JOIN opr o ON o.id_opr = s.id_opr
+    ORDER BY s.fecha_creacion DESC, s.id_ojt_seguimiento DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_ojt_seguimiento_obtener $$
+CREATE PROCEDURE sp_ojt_seguimiento_obtener(IN p_id_ojt_seguimiento INT)
+BEGIN
+    SELECT
+        s.id_ojt_seguimiento,
+        s.id_persona,
+        CONCAT(p.nombres, ' ', p.apellidos) AS persona_nombre,
+        s.id_opr,
+        o.codigo_opr,
+        o.nombre AS grupo_nombre,
+        s.dia,
+        s.aht,
+        s.calidad,
+        s.csat,
+        s.estado,
+        s.observacion,
+        s.fecha_creacion
+    FROM ojt_seguimientos s
+    INNER JOIN personas p ON p.id_persona = s.id_persona
+    INNER JOIN opr o ON o.id_opr = s.id_opr
+    WHERE s.id_ojt_seguimiento = p_id_ojt_seguimiento;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_ojt_seguimiento_update $$
+CREATE PROCEDURE sp_ojt_seguimiento_update(
+    IN p_id_ojt_seguimiento INT,
+    IN p_id_persona INT,
+    IN p_id_opr INT,
+    IN p_dia INT,
+    IN p_aht VARCHAR(20),
+    IN p_calidad DECIMAL(5, 2),
+    IN p_csat DECIMAL(5, 2),
+    IN p_estado VARCHAR(50),
+    IN p_observacion TEXT
+)
+BEGIN
+    UPDATE ojt_seguimientos
+    SET id_persona = p_id_persona,
+        id_opr = p_id_opr,
+        dia = p_dia,
+        aht = p_aht,
+        calidad = p_calidad,
+        csat = p_csat,
+        estado = p_estado,
+        observacion = p_observacion
+    WHERE id_ojt_seguimiento = p_id_ojt_seguimiento;
+
+    CALL sp_ojt_seguimiento_obtener(p_id_ojt_seguimiento);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_ojt_seguimiento_delete $$
+CREATE PROCEDURE sp_ojt_seguimiento_delete(IN p_id_ojt_seguimiento INT)
+BEGIN
+    UPDATE ojt_seguimientos
+    SET estado = 'ANULADO'
+    WHERE id_ojt_seguimiento = p_id_ojt_seguimiento;
+
+    SELECT p_id_ojt_seguimiento AS id_ojt_seguimiento, ROW_COUNT() AS filas_afectadas;
+END $$
+
+DELIMITER ;
+
+-- Views normalizadas para lectura segura desde FastAPI
+DROP VIEW IF EXISTS vw_login_users;
+CREATE VIEW vw_login_users AS
+SELECT
+    u.id_usuario AS user_id,
+    u.nombre_completo AS full_name,
+    u.correo AS email,
+    u.clave_hash AS password_hash,
+    u.id_rol AS role_id,
+    r.nombre AS role_key,
+    u.codigo_qr_unico AS qr_code,
+    u.estado AS status,
+    u.fecha_creacion AS created_at
+FROM usuarios u
+INNER JOIN roles r ON r.id_rol = u.id_rol;
+
+DROP VIEW IF EXISTS vw_roles_catalog;
+CREATE VIEW vw_roles_catalog AS
+SELECT
+    id_rol AS role_id,
+    nombre AS role_key,
+    estado AS status,
+    fecha_creacion AS created_at
+FROM roles;
+
+DROP VIEW IF EXISTS vw_users;
+CREATE VIEW vw_users AS
+SELECT
+    u.id_usuario AS user_id,
+    u.nombre_completo AS full_name,
+    u.correo AS email,
+    u.id_rol AS role_id,
+    r.nombre AS role_key,
+    u.codigo_qr_unico AS qr_code,
+    u.estado AS status,
+    u.fecha_creacion AS created_at
+FROM usuarios u
+INNER JOIN roles r ON r.id_rol = u.id_rol;
+
+DROP VIEW IF EXISTS vw_campaigns;
+CREATE VIEW vw_campaigns AS
+SELECT
+    c.id_campana AS campaign_id,
+    c.nombre AS name,
+    c.ceco AS cost_center,
+    c.descripcion AS description,
+    c.estado AS status,
+    c.fecha_creacion AS created_at,
+    (
+        SELECT COUNT(*)
+        FROM opr o
+        WHERE o.id_campana = c.id_campana
+    ) AS groups_total,
+    (
+        SELECT COUNT(*)
+        FROM personas p
+        WHERE p.id_campana = c.id_campana
+    ) AS people_total
+FROM campanas c;
+
+DROP VIEW IF EXISTS vw_activity_types;
+CREATE VIEW vw_activity_types AS
+SELECT
+    id_tipo_actividad AS activity_type_id,
+    nombre AS name,
+    descripcion AS description,
+    estado AS status,
+    fecha_creacion AS created_at
+FROM tipo_actividad;
+
+DROP VIEW IF EXISTS vw_target_audiences;
+CREATE VIEW vw_target_audiences AS
+SELECT
+    id_publico_objetivo AS target_audience_id,
+    nombre AS name,
+    descripcion AS description,
+    fecha_creacion AS created_at
+FROM publico_objetivo;
+
+DROP VIEW IF EXISTS vw_activities;
+CREATE VIEW vw_activities AS
+SELECT
+    a.id_actividad AS activity_id,
+    a.nombre AS name,
+    a.descripcion AS description,
+    a.id_tipo_actividad AS activity_type_id,
+    ta.nombre AS activity_type_name,
+    a.id_publico_objetivo AS target_audience_id,
+    po.nombre AS target_audience_name,
+    a.duracion_horas AS duration_hours,
+    a.estado AS status,
+    a.fecha_creacion AS created_at
+FROM actividades a
+INNER JOIN tipo_actividad ta ON ta.id_tipo_actividad = a.id_tipo_actividad
+LEFT JOIN publico_objetivo po ON po.id_publico_objetivo = a.id_publico_objetivo;
+
+DROP VIEW IF EXISTS vw_people;
+CREATE VIEW vw_people AS
+SELECT
+    p.id_persona AS person_id,
+    p.tipo_documento AS document_type,
+    p.numero_documento AS document_number,
+    p.nombres AS first_name,
+    p.apellidos AS last_name,
+    CONCAT(p.nombres, ' ', p.apellidos) AS full_name,
+    p.correo AS email,
+    p.telefono AS phone,
+    p.fecha_ingreso AS hire_date,
+    p.id_campana AS campaign_id,
+    c.nombre AS campaign_name,
+    p.id_hc AS hc_id,
+    h.codigo_hc AS hc_code,
+    p.codigo_qr_unico AS qr_code,
+    p.estado AS status,
+    p.fecha_creacion AS created_at
+FROM personas p
+LEFT JOIN campanas c ON c.id_campana = p.id_campana
+LEFT JOIN hc h ON h.id_hc = p.id_hc;
+
+DROP VIEW IF EXISTS vw_groups;
+CREATE VIEW vw_groups AS
+SELECT
+    o.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS name,
+    o.id_campana AS campaign_id,
+    c.nombre AS campaign_name,
+    o.fecha_inicio AS start_date,
+    o.fecha_fin AS end_date,
+    o.estado AS status,
+    o.fecha_creacion AS created_at,
+    (
+        SELECT COUNT(*)
+        FROM opr_participantes op
+        WHERE op.id_opr = o.id_opr
+          AND (op.estado IS NULL OR op.estado <> 'RETIRADO')
+    ) AS participants_total,
+    (
+        SELECT COUNT(*)
+        FROM formador_asignado fa
+        WHERE fa.id_opr = o.id_opr
+    ) AS trainers_total
+FROM opr o
+LEFT JOIN campanas c ON c.id_campana = o.id_campana;
+
+DROP VIEW IF EXISTS vw_group_participants;
+CREATE VIEW vw_group_participants AS
+SELECT
+    op.id_opr_participante AS group_participant_id,
+    op.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    op.id_persona AS person_id,
+    CONCAT(p.nombres, ' ', p.apellidos) AS person_name,
+    p.numero_documento AS document_number,
+    op.fecha_asignacion AS assigned_at,
+    op.estado AS status
+FROM opr_participantes op
+INNER JOIN opr o ON o.id_opr = op.id_opr
+INNER JOIN personas p ON p.id_persona = op.id_persona;
+
+DROP VIEW IF EXISTS vw_group_trainers;
+CREATE VIEW vw_group_trainers AS
+SELECT
+    fa.id_formador_asignado AS group_trainer_id,
+    fa.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    fa.id_usuario AS user_id,
+    u.nombre_completo AS user_name,
+    r.nombre AS role_key,
+    fa.fecha_asignacion AS assigned_at,
+    fa.rol_formador AS trainer_role
+FROM formador_asignado fa
+INNER JOIN opr o ON o.id_opr = fa.id_opr
+INNER JOIN usuarios u ON u.id_usuario = fa.id_usuario
+INNER JOIN roles r ON r.id_rol = u.id_rol;
+
+DROP VIEW IF EXISTS vw_mans;
+CREATE VIEW vw_mans AS
+SELECT
+    m.id_man AS man_id,
+    m.codigo AS man_code,
+    m.fecha_solicitud AS request_date,
+    m.id_campana AS campaign_id,
+    c.nombre AS campaign_name,
+    m.id_actividad AS activity_id,
+    a.nombre AS activity_name,
+    m.tema_tipologia AS topic,
+    m.nombre_del_pensum AS syllabus_name,
+    m.objetivo_del_pensum AS syllabus_goal,
+    m.estado AS status,
+    m.fecha_creacion AS created_at
+FROM man m
+LEFT JOIN campanas c ON c.id_campana = m.id_campana
+INNER JOIN actividades a ON a.id_actividad = m.id_actividad;
+
+DROP VIEW IF EXISTS vw_planners;
+CREATE VIEW vw_planners AS
+SELECT
+    p.id_planificador AS planner_id,
+    p.id_man AS man_id,
+    m.codigo AS man_code,
+    p.id_actividad AS activity_id,
+    a.nombre AS activity_name,
+    p.id_campana AS campaign_id,
+    c.nombre AS campaign_name,
+    p.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    p.fecha_inicio AS start_at,
+    p.fecha_fin AS end_at,
+    p.metodologia AS methodology,
+    p.sala AS room,
+    p.cupo AS capacity,
+    p.estado AS status,
+    p.creado_por AS created_by,
+    u.nombre_completo AS created_by_name,
+    p.fecha_creacion AS created_at
+FROM planificador p
+INNER JOIN man m ON m.id_man = p.id_man
+INNER JOIN actividades a ON a.id_actividad = p.id_actividad
+LEFT JOIN campanas c ON c.id_campana = p.id_campana
+LEFT JOIN opr o ON o.id_opr = p.id_opr
+LEFT JOIN usuarios u ON u.id_usuario = p.creado_por;
+
+DROP VIEW IF EXISTS vw_agenda_events;
+CREATE VIEW vw_agenda_events AS
+SELECT
+    ag.id_agenda_evento AS agenda_event_id,
+    ag.id_planificador AS planner_id,
+    ag.id_opr AS group_id,
+    ag.id_responsable AS responsible_user_id,
+    ag.titulo AS title,
+    ag.descripcion AS description,
+    ag.fecha_inicio AS start_at,
+    ag.fecha_fin AS end_at,
+    ag.modalidad AS modality,
+    ag.estado AS status,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    u.nombre_completo AS responsible_name
+FROM agenda_eventos ag
+LEFT JOIN opr o ON o.id_opr = ag.id_opr
+INNER JOIN usuarios u ON u.id_usuario = ag.id_responsable;
+
+DROP VIEW IF EXISTS vw_library_resources;
+CREATE VIEW vw_library_resources AS
+SELECT
+    b.id_biblioteca_actividad AS library_resource_id,
+    b.id_actividad AS activity_id,
+    a.nombre AS activity_name,
+    b.creado_por AS created_by,
+    u.nombre_completo AS created_by_name,
+    b.categoria AS category,
+    b.titulo AS title,
+    b.descripcion AS description,
+    b.recurso_url AS resource_url,
+    b.estado AS status,
+    b.fecha_creacion AS created_at
+FROM biblioteca_actividades b
+LEFT JOIN actividades a ON a.id_actividad = b.id_actividad
+INNER JOIN usuarios u ON u.id_usuario = b.creado_por;
+
+DROP VIEW IF EXISTS vw_feedback_records;
+CREATE VIEW vw_feedback_records AS
+SELECT
+    r.id_retroalimentacion AS feedback_id,
+    r.id_persona AS person_id,
+    CONCAT(p.nombres, ' ', p.apellidos) AS person_name,
+    r.creado_por AS created_by,
+    u.nombre_completo AS created_by_name,
+    ru.nombre AS created_by_role,
+    r.origen AS source,
+    r.titulo AS title,
+    r.fortalezas AS strengths,
+    r.oportunidades AS opportunities,
+    r.plan_accion AS action_plan,
+    r.estado AS status,
+    r.fecha_creacion AS created_at
+FROM retroalimentaciones r
+INNER JOIN personas p ON p.id_persona = r.id_persona
+INNER JOIN usuarios u ON u.id_usuario = r.creado_por
+INNER JOIN roles ru ON ru.id_rol = u.id_rol;
+
+DROP VIEW IF EXISTS vw_commitments;
+CREATE VIEW vw_commitments AS
+SELECT
+    c.id_compromiso AS commitment_id,
+    c.id_retroalimentacion AS feedback_id,
+    r.titulo AS feedback_title,
+    c.id_persona AS person_id,
+    CONCAT(p.nombres, ' ', p.apellidos) AS person_name,
+    c.id_usuario_responsable AS responsible_user_id,
+    u.nombre_completo AS responsible_name,
+    c.descripcion AS description,
+    c.fecha_compromiso AS commitment_date,
+    c.fecha_vencimiento AS due_date,
+    c.estado AS status,
+    c.fecha_creacion AS created_at
+FROM compromisos c
+INNER JOIN retroalimentaciones r ON r.id_retroalimentacion = c.id_retroalimentacion
+INNER JOIN personas p ON p.id_persona = c.id_persona
+LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario_responsable;
+
+DROP VIEW IF EXISTS vw_quality_monitors;
+CREATE VIEW vw_quality_monitors AS
+SELECT
+    m.id_monitoreo_calidad AS quality_monitor_id,
+    m.id_persona AS person_id,
+    CONCAT(p.nombres, ' ', p.apellidos) AS person_name,
+    m.id_analista AS analyst_user_id,
+    u.nombre_completo AS analyst_name,
+    m.call_id AS call_id,
+    m.criterio AS criteria,
+    m.puntaje AS score,
+    m.hallazgo AS finding,
+    m.recomendacion AS recommendation,
+    m.estado AS status,
+    m.fecha_creacion AS created_at
+FROM monitoreos_calidad m
+INNER JOIN personas p ON p.id_persona = m.id_persona
+INNER JOIN usuarios u ON u.id_usuario = m.id_analista;
+
+DROP VIEW IF EXISTS vw_ojt_followups;
+CREATE VIEW vw_ojt_followups AS
+SELECT
+    s.id_ojt_seguimiento AS ojt_followup_id,
+    s.id_persona AS person_id,
+    CONCAT(p.nombres, ' ', p.apellidos) AS person_name,
+    s.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    s.dia AS day_number,
+    s.aht AS aht,
+    s.calidad AS quality_score,
+    s.csat AS csat_score,
+    s.estado AS status,
+    s.observacion AS notes,
+    s.fecha_creacion AS created_at
+FROM ojt_seguimientos s
+INNER JOIN personas p ON p.id_persona = s.id_persona
+INNER JOIN opr o ON o.id_opr = s.id_opr;
+
+DROP VIEW IF EXISTS vw_pre_shifts;
+CREATE VIEW vw_pre_shifts AS
+SELECT
+    pr.id_preturno AS pre_shift_id,
+    pr.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    pr.creado_por AS created_by,
+    u.nombre_completo AS created_by_name,
+    pr.tema AS topic,
+    pr.fecha AS scheduled_date,
+    pr.preguntas AS question_total,
+    pr.nota_promedio AS average_score,
+    pr.estado AS status,
+    pr.fecha_creacion AS created_at
+FROM preturnos pr
+INNER JOIN opr o ON o.id_opr = pr.id_opr
+INNER JOIN usuarios u ON u.id_usuario = pr.creado_por;
+
+DROP VIEW IF EXISTS vw_operation_results;
+CREATE VIEW vw_operation_results AS
+SELECT
+    ro.id_resultado_operacion AS operation_result_id,
+    ro.id_persona AS person_id,
+    CONCAT(p.nombres, ' ', p.apellidos) AS person_name,
+    ro.modulo AS module_name,
+    ro.indicador AS indicator_name,
+    ro.valor_inicial AS initial_value,
+    ro.valor_final AS final_value,
+    ro.tendencia AS trend,
+    ro.observacion AS notes,
+    ro.fecha_creacion AS created_at
+FROM resultado_operacion ro
+INNER JOIN personas p ON p.id_persona = ro.id_persona;
+
+DROP VIEW IF EXISTS vw_virtual_sessions;
+CREATE VIEW vw_virtual_sessions AS
+SELECT
+    sv.id_sesion_virtual AS virtual_session_id,
+    sv.id_planificador AS planner_id,
+    p.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    a.nombre AS activity_name,
+    sv.teams_join_url AS join_url,
+    sv.qr_token AS qr_token,
+    sv.qr_expira_en AS qr_expires_at,
+    sv.estado_sesion AS session_status,
+    sv.creado_en AS created_at,
+    sv.actualizado_en AS updated_at
+FROM sesion_virtual sv
+INNER JOIN planificador p ON p.id_planificador = sv.id_planificador
+LEFT JOIN opr o ON o.id_opr = p.id_opr
+INNER JOIN actividades a ON a.id_actividad = p.id_actividad;
+
+/* --- AJUSTES LOGIN Y MODULO DE ASISTENCIA --- */
+
+DROP VIEW IF EXISTS vw_auth_access;
+CREATE VIEW vw_auth_access AS
+SELECT
+    u.id_usuario AS user_id,
+    u.nombre_completo AS full_name,
+    u.correo AS email,
+    LOWER(TRIM(u.correo)) AS login_identity,
+    u.clave_hash AS password_hash,
+    u.id_rol AS role_id,
+    r.nombre AS role_key,
+    u.codigo_qr_unico AS qr_code,
+    u.estado AS status,
+    u.fecha_creacion AS created_at
+FROM usuarios u
+INNER JOIN roles r ON r.id_rol = u.id_rol;
+
+DROP VIEW IF EXISTS vw_trainer_attendance_sessions;
+CREATE VIEW vw_trainer_attendance_sessions AS
+SELECT
+    sv.id_sesion_virtual AS virtual_session_id,
+    sv.id_planificador AS planner_id,
+    p.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    p.id_actividad AS activity_id,
+    a.nombre AS activity_name,
+    p.fecha_inicio AS start_at,
+    p.fecha_fin AS end_at,
+    fa.id_usuario AS trainer_user_id,
+    u.nombre_completo AS trainer_name,
+    fa.rol_formador AS trainer_role,
+    sv.teams_join_url AS join_url,
+    sv.estado_sesion AS session_status,
+    sv.qr_expira_en AS qr_expires_at,
+    sv.creado_en AS created_at,
+    COUNT(DISTINCT gp.id_opr_participante) AS expected_participants_total,
+    COUNT(DISTINCT attendance.id_asistencia_scan) AS attendance_taken_total
+FROM sesion_virtual sv
+INNER JOIN planificador p ON p.id_planificador = sv.id_planificador
+LEFT JOIN opr o ON o.id_opr = p.id_opr
+INNER JOIN actividades a ON a.id_actividad = p.id_actividad
+INNER JOIN formador_asignado fa ON fa.id_opr = p.id_opr
+INNER JOIN usuarios u ON u.id_usuario = fa.id_usuario
+LEFT JOIN opr_participantes gp
+    ON gp.id_opr = p.id_opr
+   AND (gp.estado IS NULL OR gp.estado <> 'RETIRADO')
+LEFT JOIN asistencia_scan attendance ON attendance.id_sesion_virtual = sv.id_sesion_virtual
+GROUP BY
+    sv.id_sesion_virtual,
+    sv.id_planificador,
+    p.id_opr,
+    o.codigo_opr,
+    o.nombre,
+    p.id_actividad,
+    a.nombre,
+    p.fecha_inicio,
+    p.fecha_fin,
+    fa.id_usuario,
+    u.nombre_completo,
+    fa.rol_formador,
+    sv.teams_join_url,
+    sv.estado_sesion,
+    sv.qr_expira_en,
+    sv.creado_en;
+
+DROP VIEW IF EXISTS vw_trainer_attendance_records;
+CREATE VIEW vw_trainer_attendance_records AS
+SELECT
+    attendance.id_asistencia_scan AS attendance_record_id,
+    attendance.id_sesion_virtual AS virtual_session_id,
+    sv.id_planificador AS planner_id,
+    p.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    p.id_actividad AS activity_id,
+    a.nombre AS activity_name,
+    fa.id_usuario AS trainer_user_id,
+    attendance.id_persona AS person_id,
+    COALESCE(CONCAT(pe.nombres, ' ', pe.apellidos), attendance.nombre_capturado) AS participant_name,
+    COALESCE(pe.numero_documento, attendance.cedula_capturada) AS document_number,
+    attendance.nombre_capturado AS captured_name,
+    attendance.cedula_capturada AS captured_document,
+    attendance.estado_validacion AS validation_status,
+    attendance.origen AS source,
+    attendance.fecha_scan AS scanned_at,
+    attendance.observacion AS notes
+FROM asistencia_scan attendance
+INNER JOIN sesion_virtual sv ON sv.id_sesion_virtual = attendance.id_sesion_virtual
+INNER JOIN planificador p ON p.id_planificador = sv.id_planificador
+LEFT JOIN opr o ON o.id_opr = p.id_opr
+INNER JOIN actividades a ON a.id_actividad = p.id_actividad
+INNER JOIN formador_asignado fa ON fa.id_opr = p.id_opr
+LEFT JOIN personas pe ON pe.id_persona = attendance.id_persona;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS sp_sesion_virtual_enlace_guardar $$
+CREATE PROCEDURE sp_sesion_virtual_enlace_guardar(
+    IN p_id_sesion_virtual INT,
+    IN p_teams_join_url TEXT
+)
+BEGIN
+    UPDATE sesion_virtual
+    SET teams_join_url = p_teams_join_url,
+        actualizado_en = NOW()
+    WHERE id_sesion_virtual = p_id_sesion_virtual;
+
+    SELECT *
+    FROM vw_virtual_sessions
+    WHERE virtual_session_id = p_id_sesion_virtual;
+END $$
+
+DELIMITER ;
+
+/* --- INTEGRACION QR DE ASISTENCIA POR SESION --- */
+
+CREATE TABLE IF NOT EXISTS tipo_documento_catalogo (
+    id_tipo_documento_catalogo INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(20) NOT NULL UNIQUE,
+    nombre VARCHAR(100) NOT NULL,
+    regex_documento VARCHAR(255) NOT NULL,
+    longitud_minima INT NOT NULL DEFAULT 4,
+    longitud_maxima INT NOT NULL DEFAULT 30,
+    estado TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+INSERT IGNORE INTO tipo_documento_catalogo (
+    codigo, nombre, regex_documento, longitud_minima, longitud_maxima, estado
+) VALUES
+    ('CC', 'Cedula de ciudadania', '^[0-9]{6,12}$', 6, 12, 1),
+    ('CE', 'Cedula de extranjeria', '^[A-Za-z0-9]{6,15}$', 6, 15, 1),
+    ('TI', 'Tarjeta de identidad', '^[0-9]{8,11}$', 8, 11, 1),
+    ('PASAPORTE', 'Pasaporte', '^[A-Za-z0-9]{5,20}$', 5, 20, 1),
+    ('PEP', 'Permiso especial de permanencia', '^[A-Za-z0-9]{6,20}$', 6, 20, 1),
+    ('PPT', 'Permiso por proteccion temporal', '^[A-Za-z0-9]{6,20}$', 6, 20, 1),
+    ('NIT', 'Numero de identificacion tributaria', '^[0-9]{6,15}$', 6, 15, 1);
+
+ALTER TABLE asistencia_scan
+    MODIFY COLUMN id_sesion_virtual INT NULL,
+    ADD COLUMN id_sesion_virtual_qr INT NULL AFTER id_sesion_virtual,
+    ADD COLUMN qr_token_capturado VARCHAR(255) NOT NULL AFTER id_sesion_virtual_qr,
+    ADD COLUMN tipo_qr VARCHAR(30) NULL AFTER qr_token_capturado,
+    ADD COLUMN tipo_documento_capturado VARCHAR(20) NULL AFTER tipo_qr;
+
+ALTER TABLE asistencia_scan
+    ADD CONSTRAINT fk_asistencia_scan_sesion_qr
+        FOREIGN KEY (id_sesion_virtual_qr) REFERENCES sesion_virtual_qr(id_sesion_virtual_qr)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL;
+
+ALTER TABLE asistencia_scan
+    ADD KEY idx_asistencia_scan_estado (estado_validacion, fecha_scan),
+    ADD KEY idx_asistencia_scan_sesion_qr (id_sesion_virtual_qr, fecha_scan),
+    ADD KEY idx_asistencia_scan_token (qr_token_capturado);
+
+ALTER TABLE wave_formador
+    ADD COLUMN id_sesion_virtual INT NULL AFTER id_wave_formador,
+    ADD COLUMN estado_asistencia VARCHAR(20) NOT NULL DEFAULT 'ASISTIO' AFTER asistencia,
+    ADD COLUMN fecha_registro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER observacion;
+
+ALTER TABLE wave_formador
+    ADD CONSTRAINT fk_wave_formador_sesion
+        FOREIGN KEY (id_sesion_virtual) REFERENCES sesion_virtual(id_sesion_virtual)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL;
+
+ALTER TABLE wave_formador
+    ADD UNIQUE KEY uq_wave_formador_sesion_persona (id_sesion_virtual, id_persona),
+    ADD KEY idx_wave_formador_estado (estado_asistencia, fecha_registro);
+
+DROP VIEW IF EXISTS vw_document_types;
+CREATE VIEW vw_document_types AS
+SELECT
+    id_tipo_documento_catalogo AS document_type_id,
+    codigo AS code,
+    nombre AS name,
+    regex_documento AS regex_pattern,
+    longitud_minima AS min_length,
+    longitud_maxima AS max_length,
+    estado AS status,
+    fecha_creacion AS created_at
+FROM tipo_documento_catalogo
+WHERE estado = 1;
+
+DROP VIEW IF EXISTS vw_public_qr_access;
+CREATE VIEW vw_public_qr_access AS
+SELECT
+    qr.id_sesion_virtual_qr AS session_qr_id,
+    qr.id_sesion_virtual AS virtual_session_id,
+    sv.id_planificador AS planner_id,
+    qr.tipo_qr AS qr_type,
+    qr.qr_token AS qr_token,
+    qr.public_url AS public_url,
+    qr.activa_desde AS active_from,
+    qr.expira_en AS expires_at,
+    CASE
+        WHEN NOW() < qr.activa_desde THEN 'PENDIENTE'
+        WHEN NOW() > qr.expira_en THEN 'EXPIRADO'
+        ELSE 'VIGENTE'
+    END AS qr_status,
+    qr.estado AS stored_status,
+    p.fecha_inicio AS session_start_at,
+    p.fecha_fin AS session_end_at,
+    p.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    p.id_actividad AS activity_id,
+    a.nombre AS activity_name,
+    p.id_campana AS campaign_id,
+    c.nombre AS campaign_name,
+    sv.estado_sesion AS session_status,
+    sv.teams_join_url AS join_url
+FROM sesion_virtual_qr qr
+INNER JOIN sesion_virtual sv ON sv.id_sesion_virtual = qr.id_sesion_virtual
+INNER JOIN planificador p ON p.id_planificador = sv.id_planificador
+LEFT JOIN opr o ON o.id_opr = p.id_opr
+INNER JOIN actividades a ON a.id_actividad = p.id_actividad
+LEFT JOIN campanas c ON c.id_campana = p.id_campana;
+
+DROP VIEW IF EXISTS vw_trainer_session_qr_codes;
+CREATE VIEW vw_trainer_session_qr_codes AS
+SELECT
+    qr.id_sesion_virtual_qr AS session_qr_id,
+    qr.id_sesion_virtual AS virtual_session_id,
+    sv.id_planificador AS planner_id,
+    fa.id_usuario AS trainer_user_id,
+    qr.tipo_qr AS qr_type,
+    qr.qr_token AS qr_token,
+    qr.public_url AS public_url,
+    qr.activa_desde AS active_from,
+    qr.expira_en AS expires_at,
+    CASE
+        WHEN NOW() < qr.activa_desde THEN 'PENDIENTE'
+        WHEN NOW() > qr.expira_en THEN 'EXPIRADO'
+        ELSE 'VIGENTE'
+    END AS qr_status,
+    p.fecha_inicio AS session_start_at,
+    p.fecha_fin AS session_end_at,
+    p.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    p.id_actividad AS activity_id,
+    a.nombre AS activity_name,
+    p.id_campana AS campaign_id,
+    c.nombre AS campaign_name
+FROM sesion_virtual_qr qr
+INNER JOIN sesion_virtual sv ON sv.id_sesion_virtual = qr.id_sesion_virtual
+INNER JOIN planificador p ON p.id_planificador = sv.id_planificador
+LEFT JOIN opr o ON o.id_opr = p.id_opr
+INNER JOIN actividades a ON a.id_actividad = p.id_actividad
+LEFT JOIN campanas c ON c.id_campana = p.id_campana
+INNER JOIN formador_asignado fa ON fa.id_opr = p.id_opr;
+
+DROP VIEW IF EXISTS vw_session_expected_people;
+CREATE VIEW vw_session_expected_people AS
+SELECT
+    sv.id_sesion_virtual AS virtual_session_id,
+    p.id_planificador AS planner_id,
+    p.id_opr AS group_id,
+    p.id_campana AS campaign_id,
+    c.nombre AS campaign_name,
+    op.id_opr_participante AS group_participant_id,
+    pe.id_persona AS person_id,
+    UPPER(COALESCE(pe.tipo_documento, '')) AS document_type,
+    pe.numero_documento AS document_number,
+    CONCAT(pe.nombres, ' ', pe.apellidos) AS full_name,
+    pe.nombres AS first_name,
+    pe.apellidos AS last_name,
+    LOWER(TRIM(pe.correo)) AS email,
+    pe.id_hc AS hc_id,
+    h.codigo_hc AS hc_code,
+    CASE WHEN pe.id_hc IS NULL THEN 0 ELSE 1 END AS is_in_hc,
+    CASE WHEN op.estado IS NULL OR UPPER(op.estado) = 'ACTIVO' THEN 1 ELSE 0 END AS is_active
+FROM sesion_virtual sv
+INNER JOIN planificador p ON p.id_planificador = sv.id_planificador
+LEFT JOIN campanas c ON c.id_campana = p.id_campana
+INNER JOIN opr_participantes op ON op.id_opr = p.id_opr
+INNER JOIN personas pe ON pe.id_persona = op.id_persona
+LEFT JOIN hc h ON h.id_hc = pe.id_hc;
+
+DROP VIEW IF EXISTS vw_trainer_attendance_records;
+CREATE VIEW vw_trainer_attendance_records AS
+SELECT
+    attendance.id_asistencia_scan AS attendance_record_id,
+    attendance.id_sesion_virtual AS virtual_session_id,
+    attendance.id_sesion_virtual_qr AS session_qr_id,
+    qr.tipo_qr AS qr_type,
+    attendance.qr_token_capturado AS captured_qr_token,
+    attendance.tipo_documento_capturado AS captured_document_type,
+    sv.id_planificador AS planner_id,
+    p.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    p.id_actividad AS activity_id,
+    a.nombre AS activity_name,
+    fa.id_usuario AS trainer_user_id,
+    attendance.id_persona AS person_id,
+    COALESCE(CONCAT(pe.nombres, ' ', pe.apellidos), attendance.nombre_capturado) AS participant_name,
+    COALESCE(pe.numero_documento, attendance.cedula_capturada) AS document_number,
+    attendance.nombre_capturado AS captured_name,
+    attendance.cedula_capturada AS captured_document,
+    attendance.id_campana_capturada AS campaign_id,
+    c.nombre AS campaign_name,
+    attendance.estado_validacion AS validation_status,
+    attendance.origen AS source,
+    attendance.fecha_scan AS scanned_at,
+    attendance.observacion AS notes,
+    wf.estado_asistencia AS wave_status,
+    wf.fecha_registro AS wave_recorded_at
+FROM asistencia_scan attendance
+INNER JOIN sesion_virtual sv ON sv.id_sesion_virtual = attendance.id_sesion_virtual
+INNER JOIN planificador p ON p.id_planificador = sv.id_planificador
+LEFT JOIN opr o ON o.id_opr = p.id_opr
+INNER JOIN actividades a ON a.id_actividad = p.id_actividad
+INNER JOIN formador_asignado fa ON fa.id_opr = p.id_opr
+LEFT JOIN personas pe ON pe.id_persona = attendance.id_persona
+LEFT JOIN campanas c ON c.id_campana = attendance.id_campana_capturada
+LEFT JOIN sesion_virtual_qr qr ON qr.id_sesion_virtual_qr = attendance.id_sesion_virtual_qr
+LEFT JOIN wave_formador wf
+    ON wf.id_sesion_virtual = attendance.id_sesion_virtual
+   AND wf.id_persona = attendance.id_persona;
+
+DROP VIEW IF EXISTS vw_attendance_qr_records;
+CREATE VIEW vw_attendance_qr_records AS
+SELECT
+    attendance.id_asistencia_scan AS attendance_record_id,
+    attendance.id_sesion_virtual AS virtual_session_id,
+    attendance.id_sesion_virtual_qr AS session_qr_id,
+    qr.tipo_qr AS qr_type,
+    attendance.qr_token_capturado AS captured_qr_token,
+    attendance.tipo_documento_capturado AS captured_document_type,
+    sv.id_planificador AS planner_id,
+    p.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    p.id_actividad AS activity_id,
+    a.nombre AS activity_name,
+    attendance.id_persona AS person_id,
+    COALESCE(CONCAT(pe.nombres, ' ', pe.apellidos), attendance.nombre_capturado) AS participant_name,
+    COALESCE(pe.numero_documento, attendance.cedula_capturada) AS document_number,
+    attendance.nombre_capturado AS captured_name,
+    attendance.cedula_capturada AS captured_document,
+    attendance.id_campana_capturada AS campaign_id,
+    c.nombre AS campaign_name,
+    attendance.estado_validacion AS validation_status,
+    attendance.origen AS source,
+    attendance.fecha_scan AS scanned_at,
+    attendance.observacion AS notes,
+    wf.estado_asistencia AS wave_status,
+    wf.fecha_registro AS wave_recorded_at
+FROM asistencia_scan attendance
+INNER JOIN sesion_virtual sv ON sv.id_sesion_virtual = attendance.id_sesion_virtual
+INNER JOIN planificador p ON p.id_planificador = sv.id_planificador
+LEFT JOIN opr o ON o.id_opr = p.id_opr
+INNER JOIN actividades a ON a.id_actividad = p.id_actividad
+LEFT JOIN personas pe ON pe.id_persona = attendance.id_persona
+LEFT JOIN campanas c ON c.id_campana = attendance.id_campana_capturada
+LEFT JOIN sesion_virtual_qr qr ON qr.id_sesion_virtual_qr = attendance.id_sesion_virtual_qr
+LEFT JOIN wave_formador wf
+    ON wf.id_sesion_virtual = attendance.id_sesion_virtual
+   AND wf.id_persona = attendance.id_persona;
+
+DROP VIEW IF EXISTS vw_session_room_validation;
+CREATE VIEW vw_session_room_validation AS
+SELECT
+    live.id_teams_participante_live AS room_participant_id,
+    live.id_sesion_virtual AS virtual_session_id,
+    sv.id_planificador AS planner_id,
+    p.id_opr AS group_id,
+    o.codigo_opr AS group_code,
+    o.nombre AS group_name,
+    p.id_actividad AS activity_id,
+    a.nombre AS activity_name,
+    fa.id_usuario AS trainer_user_id,
+    live.teams_participant_id AS teams_participant_id,
+    live.display_name AS display_name,
+    LOWER(TRIM(live.email)) AS email,
+    live.estado_participacion AS participation_status,
+    live.fecha_join AS join_time,
+    live.fecha_leave AS leave_time,
+    live.autorizado AS live_authorized_flag,
+    live.razon_validacion AS live_validation_reason,
+    expected.person_id AS expected_person_id,
+    expected.full_name AS expected_person_name,
+    expected.document_number AS expected_document_number,
+    expected.hc_code AS expected_hc_code,
+    attendance.estado_validacion AS attendance_validation_status,
+    CASE
+        WHEN expected.person_id IS NOT NULL THEN 'AUTORIZADO_EN_LISTA'
+        WHEN attendance.id_asistencia_scan IS NOT NULL THEN 'REGISTRADO_SIN_MATCH_DIRECTO'
+        ELSE 'NO_AUTORIZADO'
+    END AS room_validation_status
+FROM teams_participante_live live
+INNER JOIN sesion_virtual sv ON sv.id_sesion_virtual = live.id_sesion_virtual
+INNER JOIN planificador p ON p.id_planificador = sv.id_planificador
+LEFT JOIN opr o ON o.id_opr = p.id_opr
+INNER JOIN actividades a ON a.id_actividad = p.id_actividad
+INNER JOIN formador_asignado fa ON fa.id_opr = p.id_opr
+LEFT JOIN vw_session_expected_people expected
+    ON expected.virtual_session_id = live.id_sesion_virtual
+   AND (
+        (live.email IS NOT NULL AND expected.email IS NOT NULL AND LOWER(TRIM(live.email)) = expected.email)
+        OR (live.display_name IS NOT NULL AND LOWER(TRIM(live.display_name)) = LOWER(TRIM(expected.full_name)))
+   )
+LEFT JOIN (
+    SELECT
+        id_sesion_virtual,
+        id_persona,
+        MAX(id_asistencia_scan) AS latest_attendance_record_id
+    FROM asistencia_scan
+    WHERE id_persona IS NOT NULL
+    GROUP BY id_sesion_virtual, id_persona
+) latest_attendance
+    ON latest_attendance.id_sesion_virtual = live.id_sesion_virtual
+   AND latest_attendance.id_persona = expected.person_id
+LEFT JOIN asistencia_scan attendance ON attendance.id_asistencia_scan = latest_attendance.latest_attendance_record_id;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS sp_sesion_virtual_qr_upsert $$
+CREATE PROCEDURE sp_sesion_virtual_qr_upsert(
+    IN p_id_sesion_virtual INT,
+    IN p_tipo_qr VARCHAR(30),
+    IN p_qr_token VARCHAR(255),
+    IN p_public_url VARCHAR(500),
+    IN p_activa_desde DATETIME,
+    IN p_expira_en DATETIME
+)
+BEGIN
+    DECLARE v_estado VARCHAR(30);
+
+    SET v_estado = CASE
+        WHEN NOW() < p_activa_desde THEN 'PROGRAMADO'
+        WHEN NOW() > p_expira_en THEN 'EXPIRADO'
+        ELSE 'ACTIVO'
+    END;
+
+    IF EXISTS (
+        SELECT 1
+        FROM sesion_virtual_qr
+        WHERE id_sesion_virtual = p_id_sesion_virtual
+          AND tipo_qr = p_tipo_qr
+    ) THEN
+        UPDATE sesion_virtual_qr
+        SET qr_token = p_qr_token,
+            public_url = p_public_url,
+            activa_desde = p_activa_desde,
+            expira_en = p_expira_en,
+            estado = v_estado,
+            actualizado_en = NOW()
+        WHERE id_sesion_virtual = p_id_sesion_virtual
+          AND tipo_qr = p_tipo_qr;
+    ELSE
+        INSERT INTO sesion_virtual_qr (
+            id_sesion_virtual, tipo_qr, qr_token, public_url, activa_desde, expira_en, estado
+        )
+        VALUES (
+            p_id_sesion_virtual, p_tipo_qr, p_qr_token, p_public_url, p_activa_desde, p_expira_en, v_estado
+        );
+    END IF;
+
+    IF UPPER(p_tipo_qr) = 'ASISTENCIA' THEN
+        UPDATE sesion_virtual
+        SET qr_token = p_qr_token,
+            qr_expira_en = p_expira_en,
+            actualizado_en = NOW()
+        WHERE id_sesion_virtual = p_id_sesion_virtual;
+    END IF;
+
+    SELECT *
+    FROM vw_trainer_session_qr_codes
+    WHERE virtual_session_id = p_id_sesion_virtual
+      AND qr_type = p_tipo_qr
+    ORDER BY session_qr_id DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_asistencia_qr_intento_invalido_registrar $$
+CREATE PROCEDURE sp_asistencia_qr_intento_invalido_registrar(
+    IN p_id_sesion_virtual INT,
+    IN p_id_sesion_virtual_qr INT,
+    IN p_qr_token_capturado VARCHAR(255),
+    IN p_tipo_qr VARCHAR(30),
+    IN p_tipo_documento_capturado VARCHAR(20),
+    IN p_nombre_capturado VARCHAR(150),
+    IN p_cedula_capturada VARCHAR(30),
+    IN p_id_campana_capturada INT,
+    IN p_estado_validacion VARCHAR(50),
+    IN p_ip_origen VARCHAR(45),
+    IN p_user_agent VARCHAR(255),
+    IN p_observacion VARCHAR(255)
+)
+BEGIN
+    INSERT INTO asistencia_scan (
+        id_sesion_virtual,
+        id_sesion_virtual_qr,
+        qr_token_capturado,
+        tipo_qr,
+        tipo_documento_capturado,
+        id_persona,
+        nombre_capturado,
+        cedula_capturada,
+        id_campana_capturada,
+        estado_validacion,
+        origen,
+        ip_origen,
+        user_agent,
+        observacion
+    )
+    VALUES (
+        p_id_sesion_virtual,
+        p_id_sesion_virtual_qr,
+        p_qr_token_capturado,
+        p_tipo_qr,
+        p_tipo_documento_capturado,
+        NULL,
+        p_nombre_capturado,
+        p_cedula_capturada,
+        p_id_campana_capturada,
+        p_estado_validacion,
+        'qr_form',
+        p_ip_origen,
+        p_user_agent,
+        p_observacion
+    );
+
+    SELECT *
+    FROM vw_trainer_attendance_records
+    WHERE attendance_record_id = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_asistencia_qr_registrar $$
+CREATE PROCEDURE sp_asistencia_qr_registrar(
+    IN p_id_sesion_virtual INT,
+    IN p_id_sesion_virtual_qr INT,
+    IN p_qr_token_capturado VARCHAR(255),
+    IN p_tipo_qr VARCHAR(30),
+    IN p_tipo_documento_capturado VARCHAR(20),
+    IN p_id_persona INT,
+    IN p_nombre_capturado VARCHAR(150),
+    IN p_cedula_capturada VARCHAR(30),
+    IN p_id_campana_capturada INT,
+    IN p_ip_origen VARCHAR(45),
+    IN p_user_agent VARCHAR(255),
+    IN p_observacion VARCHAR(255)
+)
+BEGIN
+    DECLARE v_id_planificador INT;
+    DECLARE v_id_opr INT;
+    DECLARE v_id_actividad INT;
+    DECLARE v_fecha DATE;
+    DECLARE v_estado_asistencia VARCHAR(20);
+    DECLARE v_estado_existente VARCHAR(20);
+    DECLARE v_estado_validacion VARCHAR(50);
+    DECLARE v_observacion_final TEXT;
+
+    IF p_id_persona IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La persona autorizada es obligatoria para registrar asistencia.';
+    END IF;
+
+    SELECT id_planificador
+    INTO v_id_planificador
+    FROM sesion_virtual
+    WHERE id_sesion_virtual = p_id_sesion_virtual
+    LIMIT 1;
+
+    IF v_id_planificador IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La sesion virtual indicada no existe.';
+    END IF;
+
+    SELECT id_opr, id_actividad, DATE(fecha_inicio)
+    INTO v_id_opr, v_id_actividad, v_fecha
+    FROM planificador
+    WHERE id_planificador = v_id_planificador
+    LIMIT 1;
+
+    SET v_estado_asistencia = CASE
+        WHEN UPPER(COALESCE(p_tipo_qr, 'ASISTENCIA')) = 'RETARDO' THEN 'RETARDO'
+        ELSE 'ASISTIO'
+    END;
+
+    SELECT estado_asistencia
+    INTO v_estado_existente
+    FROM wave_formador
+    WHERE id_sesion_virtual = p_id_sesion_virtual
+      AND id_persona = p_id_persona
+    LIMIT 1;
+
+    IF v_estado_existente = 'ASISTIO' AND v_estado_asistencia = 'RETARDO' THEN
+        SET v_estado_validacion = 'DUPLICADO_IGNORADO';
+    ELSEIF v_estado_existente = v_estado_asistencia THEN
+        SET v_estado_validacion = 'DUPLICADO';
+    ELSE
+        SET v_estado_validacion = v_estado_asistencia;
+    END IF;
+
+    SET v_observacion_final = CONCAT_WS(
+        ' | ',
+        CONCAT('Registro QR ', v_estado_asistencia),
+        NULLIF(p_observacion, '')
+    );
+
+    INSERT INTO asistencia_scan (
+        id_sesion_virtual,
+        id_sesion_virtual_qr,
+        qr_token_capturado,
+        tipo_qr,
+        tipo_documento_capturado,
+        id_persona,
+        nombre_capturado,
+        cedula_capturada,
+        id_campana_capturada,
+        estado_validacion,
+        origen,
+        ip_origen,
+        user_agent,
+        observacion
+    )
+    VALUES (
+        p_id_sesion_virtual,
+        p_id_sesion_virtual_qr,
+        p_qr_token_capturado,
+        p_tipo_qr,
+        p_tipo_documento_capturado,
+        p_id_persona,
+        p_nombre_capturado,
+        p_cedula_capturada,
+        p_id_campana_capturada,
+        v_estado_validacion,
+        'qr_form',
+        p_ip_origen,
+        p_user_agent,
+        v_observacion_final
+    );
+
+    IF v_estado_validacion IN ('ASISTIO', 'RETARDO') THEN
+        INSERT INTO wave_formador (
+            id_sesion_virtual,
+            id_persona,
+            id_opr,
+            id_actividad,
+            fecha,
+            asistencia,
+            estado_asistencia,
+            observacion
+        )
+        VALUES (
+            p_id_sesion_virtual,
+            p_id_persona,
+            v_id_opr,
+            v_id_actividad,
+            v_fecha,
+            1,
+            v_estado_asistencia,
+            v_observacion_final
+        )
+        ON DUPLICATE KEY UPDATE
+            asistencia = 1,
+            estado_asistencia = CASE
+                WHEN wave_formador.estado_asistencia = 'ASISTIO' THEN 'ASISTIO'
+                WHEN VALUES(estado_asistencia) = 'ASISTIO' THEN 'ASISTIO'
+                ELSE 'RETARDO'
+            END,
+            observacion = CONCAT_WS(' | ', NULLIF(wave_formador.observacion, ''), NULLIF(VALUES(observacion), '')),
+            fecha_registro = NOW();
+    END IF;
+
+    SELECT *
+    FROM vw_trainer_attendance_records
+    WHERE attendance_record_id = LAST_INSERT_ID();
+END $$
+
+DROP PROCEDURE IF EXISTS sp_teams_moderacion_log_registrar $$
+CREATE PROCEDURE sp_teams_moderacion_log_registrar(
+    IN p_id_sesion_virtual INT,
+    IN p_teams_participant_id VARCHAR(150),
+    IN p_accion VARCHAR(50),
+    IN p_resultado VARCHAR(50),
+    IN p_detalle TEXT
+)
+BEGIN
+    INSERT INTO teams_moderacion_log (
+        id_sesion_virtual,
+        teams_participant_id,
+        accion,
+        resultado,
+        detalle
+    )
+    VALUES (
+        p_id_sesion_virtual,
+        p_teams_participant_id,
+        p_accion,
+        p_resultado,
+        p_detalle
+    );
+
+    SELECT
+        id_teams_moderacion_log,
+        id_sesion_virtual,
+        teams_participant_id,
+        accion,
+        resultado,
+        detalle,
+        fecha_evento
+    FROM teams_moderacion_log
+    WHERE id_teams_moderacion_log = LAST_INSERT_ID();
+END $$
+
+DELIMITER ;

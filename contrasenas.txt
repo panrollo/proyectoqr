@@ -1,0 +1,10 @@
+Rol	Correo	Contraseña	Hash almacenado
+admin	admin@local.test	Admin12345!	$pbkdf2-sha256$29000$KeX8P6d0LuWc0/r/P8f4/w$dSBZL6Z8ugui24cV7o.JNEKFxqp999XwTt/ST5ylALs
+formador	formador1@local.test	Formador12345!	$pbkdf2-sha256$29000$ttZ6T6kVwvh/r9UaAyDkvA$LhdulZdTBmeKTDXWCx1LSyOw3d0tI4N2k7gQO5k9y5g
+formador	formador2@local.test	Formador12345!	$pbkdf2-sha256$29000$ttZ6T6kVwvh/r9UaAyDkvA$LhdulZdTBmeKTDXWCx1LSyOw3d0tI4N2k7gQO5k9y5g
+lider	lider@local.test	Lider12345!	$pbkdf2-sha256$29000$gpByLmXsXYtR6j1njFHKGQ$sF50yEMEX2ELDldMmFQnc/gD5fKzEVLNLtk4cKGeYyM
+jefe_fc	jefe.fc@local.test	JefeFC12345!	$pbkdf2-sha256$29000$l9Kak9I6p9T6n5MyRiilNA$4KWBoY2.kZ.wuFOpxIVMvtubcgklgEpsGvsQyC5tZf8
+analista	analista@local.test	Analista12345!	$pbkdf2-sha256$29000$2lsrxfg/h/C.l5KyNiakVA$UlWk3BEB09uP9I9JP5YettFDw5V.2FNsjU9Cu595c6M
+supervisor	supervisor@local.test	Supervisor12345!	$pbkdf2-sha256$29000$.d/b./9fi7HW2jvHmJOSEg$dvQzelt23981AZYd4KipVcheIt4C0xdHTRJp/pD4SLA
+jefe_ops	jefe.ops@local.test	JefeOps12345!	$pbkdf2-sha256$29000$UmpNSSlFKAWAMGbMmRNi7A$e5EsTF04h1SCyZNUkWw/hyVOloYYf1E6cKPOn7kKWu4
+agente	agente@local.test	Agente12345!	$pbkdf2-sha256$29000$8L63lvIeY6wV4nzvvZfSWg$/VgoZCmYyRncLvhXrBuxgXNrF1zECsKl0I7WqFpjEdo
