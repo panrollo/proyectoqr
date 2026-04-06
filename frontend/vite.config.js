@@ -5,6 +5,10 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, "..", "");
   const host = env.VITE_DEV_HOST || "127.0.0.1";
   const port = Number(env.VITE_DEV_PORT || 5173);
+  const allowedHosts = (env.VITE_ALLOWED_HOSTS || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
 
   return {
     envDir: "..",
@@ -13,8 +17,7 @@ export default defineConfig(({ mode }) => {
       host,
       port,
       strictPort: true,
-          allowedHosts: [
-      "cheerful-freedom-production.up.railway.app",]
+      ...(allowedHosts.length ? { allowedHosts } : {}),
     },
     preview: {
       host,

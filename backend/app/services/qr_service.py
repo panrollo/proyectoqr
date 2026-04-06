@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
+from urllib.parse import quote
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import qrcode
@@ -35,8 +36,18 @@ def get_now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def build_public_qr_path(qr_token: str) -> str:
+    return f"/encuesta-asistencia/{quote(qr_token, safe='')}"
+
+
 def build_public_qr_url(qr_token: str) -> str:
-    return f"{settings.public_app_url.rstrip('/')}/encuesta-asistencia/{qr_token}"
+    return f"{settings.public_app_url.rstrip('/')}{build_public_qr_path(qr_token)}"
+
+
+def resolve_public_qr_url(qr_token: str, persisted_public_url: str | None = None) -> str:
+    if not qr_token:
+        return (persisted_public_url or "").strip()
+    return build_public_qr_url(qr_token)
 
 
 def create_qr_access_token(virtual_session_id: int, qr_type: str, active_from: datetime, expires_at: datetime, nonce: str) -> str:

@@ -12,6 +12,7 @@ from app.services.qr_service import (
     decode_qr_access_token,
     get_now_local,
     localize_database_datetime,
+    resolve_public_qr_url,
     resolve_qr_window_status,
 )
 from app.services.query_service import fetch_all
@@ -64,6 +65,7 @@ def _build_public_qr_payload(qr_row: dict) -> dict:
     active_from = localize_database_datetime(qr_row["active_from"])
     expires_at = localize_database_datetime(qr_row["expires_at"])
     window_status = resolve_qr_window_status(active_from, expires_at)
+    public_url = resolve_public_qr_url(qr_row["qr_token"], qr_row.get("public_url"))
     return {
         "access_status": window_status,
         "message": _resolve_qr_message(window_status),
@@ -74,7 +76,7 @@ def _build_public_qr_payload(qr_row: dict) -> dict:
             "qr_token": qr_row["qr_token"],
             "active_from": active_from.isoformat(),
             "expires_at": expires_at.isoformat(),
-            "public_url": qr_row["public_url"],
+            "public_url": public_url,
         },
         "session": {
             "virtual_session_id": qr_row["virtual_session_id"],
@@ -100,6 +102,27 @@ def _build_public_qr_payload(qr_row: dict) -> dict:
             "required_fields": ["full_name", "document_number", "campaign_id"],
         },
     }
+
+
+def _resolve_registration_record(registration: dict, qr_row: dict, person_id: int | None) -> dict:
+    attendance_record_id = registration.get("attendance_record_id")
+    if attendance_record_id:
+        normalized_records = fetch_all("attendance_qr_records", {"attendance_record_id": attendance_record_id})
+        if normalized_records:
+            return normalized_records[0]
+
+    if person_id:
+        fallback_records = fetch_all(
+            "attendance_qr_records",
+            {
+                "virtual_session_id": qr_row["virtual_session_id"],
+                "person_id": person_id,
+            },
+        )
+        if fallback_records:
+            return fallback_records[0]
+
+    return registration
 
 
 def _ensure_qr_payload_matches_row(token_payload: dict, qr_row: dict) -> None:
@@ -151,13 +174,16 @@ def _register_invalid_attempt(
 
 def list_trainer_session_qr_codes(session_user: dict, virtual_session_id: int) -> list[dict]:
     _get_trainer_session(session_user, virtual_session_id)
-    return fetch_all(
+    rows = fetch_all(
         "trainer_session_qr_codes",
         {
             "trainer_user_id": session_user["user_id"],
             "virtual_session_id": virtual_session_id,
         },
     )
+    for row in rows:
+        row["public_url"] = resolve_public_qr_url(row["qr_token"], row.get("public_url"))
+    return rows
 
 
 def generate_trainer_session_qr_codes(session_user: dict, virtual_session_id: int) -> list[dict]:
@@ -219,7 +245,7 @@ def render_public_qr_image(qr_token: str) -> str:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     _ensure_qr_payload_matches_row(token_payload, qr_row)
-    return build_qr_svg(qr_row["public_url"])
+    return build_qr_svg(resolve_public_qr_url(qr_row["qr_token"], qr_row.get("public_url")))
 
 
 def submit_public_qr_access(qr_token: str, payload, client_ip: str | None, user_agent: str | None) -> dict:
@@ -352,9 +378,7 @@ def submit_public_qr_access(qr_token: str, payload, client_ip: str | None, user_
         ],
     )
 
-    normalized_records = fetch_all("attendance_qr_records", {"attendance_record_id": registration["attendance_record_id"]})
-    if normalized_records:
-        registration = normalized_records[0]
+    registration = _resolve_registration_record(registration, qr_row, person["person_id"])
 
     validation_status = registration.get("validation_status")
     detail_message = {
