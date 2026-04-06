@@ -13,6 +13,8 @@ export default defineConfig(({ mode }) => {
       host,
       port,
       strictPort: true,
+          allowedHosts: [
+      "cheerful-freedom-production.up.railway.app",]
     },
     preview: {
       host,
