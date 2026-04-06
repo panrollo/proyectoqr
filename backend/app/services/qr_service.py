@@ -41,13 +41,18 @@ def build_public_qr_path(qr_token: str) -> str:
 
 
 def build_public_qr_url(qr_token: str) -> str:
-    return f"{settings.public_app_url.rstrip('/')}{build_public_qr_path(qr_token)}"
+    base_url = (settings.public_app_url or "").rstrip("/")
+    if not base_url:
+        raise ValueError("PUBLIC_APP_URL no esta configurada para construir el enlace publico del QR.")
+    return f"{base_url}{build_public_qr_path(qr_token)}"
 
 
 def resolve_public_qr_url(qr_token: str, persisted_public_url: str | None = None) -> str:
     if not qr_token:
         return (persisted_public_url or "").strip()
-    return build_public_qr_url(qr_token)
+    if settings.public_app_url:
+        return build_public_qr_url(qr_token)
+    return (persisted_public_url or "").strip()
 
 
 def create_qr_access_token(virtual_session_id: int, qr_type: str, active_from: datetime, expires_at: datetime, nonce: str) -> str:

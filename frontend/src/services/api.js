@@ -1,11 +1,19 @@
+function isLocalHostname(hostname) {
+  return hostname === "127.0.0.1" || hostname === "localhost";
+}
+
 function resolveApiBaseUrl() {
-  const configuredBaseUrl = import.meta.env.VITE_API_URL;
+  const configuredBaseUrl = import.meta.env.VITE_API_URL?.trim();
   if (configuredBaseUrl) {
-    return configuredBaseUrl.replace(/\/$/, "");
+    return configuredBaseUrl.replace(/\/+$/, "");
   }
 
-  const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:8000/api`;
+  const { protocol, hostname, origin } = window.location;
+  if (isLocalHostname(hostname)) {
+    return `${protocol}//${hostname}:8000/api`;
+  }
+
+  return `${origin}/api`;
 }
 
 export const API_BASE_URL = resolveApiBaseUrl();
@@ -26,11 +34,31 @@ async function request(path, options = {}) {
     ...options,
   });
 
+  const contentType = response.headers.get("content-type") || "";
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = null;
+
+  if (text) {
+    if (contentType.includes("application/json")) {
+      try {
+        data = JSON.parse(text);
+      } catch (_error) {
+        data = null;
+      }
+    } else {
+      data = { raw: text };
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(data?.detail || "Request failed.");
+    const responseMessage =
+      data?.detail ||
+      data?.message ||
+      (response.status >= 500
+        ? `La API no respondio correctamente (${response.status}).`
+        : "Request failed.");
+
+    throw new Error(responseMessage);
   }
 
   return data;
