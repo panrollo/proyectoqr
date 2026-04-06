@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => {
     preview: {
       host,
       port,
+      ...(allowedHosts.length ? { allowedHosts } : {}),
     },
   };
 });
